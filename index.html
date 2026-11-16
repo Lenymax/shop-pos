@@ -9,7 +9,7 @@
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
     body { background: #f1f5f9; padding: 12px; color: #0f172a; }
-    .container { max-width: 880px; margin: auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }
+    .container { max-width: 900px; margin: auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }
     
     /* Header & Connection Pill */
     .header { background: #0f172a; color: #fff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
@@ -22,10 +22,12 @@
     .pill-queue { background: #92400e; color: #fef3c7; cursor: pointer; border: none; }
     .btn-logout { background: #334155; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; }
 
-    /* Login & Subscription Lock Screens */
-    .auth-box { max-width: 400px; margin: 40px auto; background: #fff; padding: 28px; border-radius: 12px; box-shadow: 0 6px 25px rgba(0,0,0,0.1); }
+    /* Login, Admin Auth & Subscription Lock Screens */
+    .auth-box { max-width: 400px; margin: 35px auto; background: #fff; padding: 28px; border-radius: 12px; box-shadow: 0 6px 25px rgba(0,0,0,0.1); }
     .auth-box h2 { margin-bottom: 6px; text-align: center; }
     .auth-box p { font-size: 13px; color: #64748b; text-align: center; margin-bottom: 20px; }
+    .admin-link-row { text-align: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
+    .link-btn { background: none; border: none; color: #475569; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; }
     .lock-banner { background: #fef2f2; border: 2px solid #f87171; color: #991b1b; padding: 20px; border-radius: 10px; text-align: center; margin: 20px; }
 
     /* Navigation Tabs */
@@ -37,6 +39,7 @@
 
     /* Forms & Inputs */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px; }
     .pos-entry-box { background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 18px; }
     .grid-qty-amount { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; margin-top: 12px; }
     label { display: block; font-size: 11px; font-weight: 700; margin-bottom: 5px; color: #334155; text-transform: uppercase; letter-spacing: 0.4px; }
@@ -44,15 +47,20 @@
     input:focus, select:focus { outline: none; border-color: #2563eb; }
 
     /* Buttons */
-    .btn { width: 100%; padding: 13px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 10px; font-size: 15px; }
+    .btn { width: 100%; padding: 13px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 8px; font-size: 15px; }
     .btn:hover { background: #1d4ed8; }
     .btn:disabled { background: #94a3b8; cursor: not-allowed; }
     .btn-green { background: #059669; }
     .btn-green:hover { background: #047857; }
+    .btn-dark { background: #0f172a; }
     .btn-add-cart { padding: 10px 18px; background: #0f172a; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; height: 42px; white-space: nowrap; }
     .btn-qty { flex: 1; padding: 5px 4px; background: #e2e8f0; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; }
     .btn-remove { padding: 4px 9px; background: #fee2e2; color: #b91c1c; border: none; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; }
     .btn-restock { padding: 6px 12px; background: #2563eb; color: #fff; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-sm { padding: 5px 9px; border: none; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; margin-right: 4px; margin-bottom: 4px; }
+    .btn-sm-blue { background: #dbeafe; color: #1e40af; }
+    .btn-sm-green { background: #d1fae5; color: #065f46; }
+    .btn-sm-red { background: #fee2e2; color: #991b1b; }
 
     /* Cart & Tables */
     .cart-box { border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 15px; background: #f8fafc; margin-bottom: 18px; overflow-x: auto; }
@@ -66,18 +74,18 @@
     table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: #fff; }
     th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
     th { background: #f1f5f9; }
-    .badge-low { background: #fee2e2; color: #b91c1c; padding: 3px 8px; border-radius: 12px; font-weight: 600; font-size: 11px; }
-    .badge-ok { background: #d1fae5; color: #065f46; padding: 3px 8px; border-radius: 12px; font-weight: 600; font-size: 11px; }
+    .badge-low { background: #fee2e2; color: #b91c1c; padding: 3px 8px; border-radius: 12px; font-weight: 700; font-size: 11px; }
+    .badge-ok { background: #d1fae5; color: #065f46; padding: 3px 8px; border-radius: 12px; font-weight: 700; font-size: 11px; }
     .alert { padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none; font-size: 14px; }
     .alert.show { display: block; background: #dbeafe; color: #1e3a8a; }
     .helper-hint { font-size: 11px; color: #64748b; margin-top: 4px; }
     .hidden { display: none !important; }
-    @media(max-width:650px){ .grid-2, .grid-qty-amount, .stat-cards { grid-template-columns: 1fr; } }
+    @media(max-width:650px){ .grid-2, .grid-3, .grid-qty-amount, .stat-cards { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 
-<!-- ==================== VIEW 1: SHOP LOGIN SCREEN ==================== -->
+<!-- ==================== VIEW 1: SHOPKEEPER LOGIN SCREEN ==================== -->
 <div id="loginView" class="auth-box">
   <h2>🏪 Shop POS Login</h2>
   <p>Enter your Shop ID and Cashier PIN to connect</p>
@@ -93,6 +101,26 @@
     <button type="submit" id="loginBtn" class="btn">Unlock POS</button>
     <p id="loginError" style="color:#dc2626; margin-top:12px; font-weight:600;"></p>
   </form>
+  <div class="admin-link-row">
+    <button type="button" class="link-btn" onclick="showView('adminLoginView')">🔑 Provider / Super-Admin Portal</button>
+  </div>
+</div>
+
+<!-- ==================== VIEW 1B: SUPER-ADMIN KEY LOGIN ==================== -->
+<div id="adminLoginView" class="auth-box hidden">
+  <h2>🔑 Super-Admin Portal</h2>
+  <p>Manage enrolled shops, onboarding & maintenance plans</p>
+  <form onsubmit="handleAdminLogin(event)">
+    <div style="margin-bottom:16px;">
+      <label>Master Admin Key</label>
+      <input type="password" id="masterAdminKeyInput" placeholder="Enter Master Admin Key" required>
+    </div>
+    <button type="submit" id="adminLoginBtn" class="btn btn-dark">Access Admin Console</button>
+    <p id="adminLoginError" style="color:#dc2626; margin-top:12px; font-weight:600;"></p>
+  </form>
+  <div class="admin-link-row">
+    <button type="button" class="link-btn" onclick="showView('loginView')">← Back to Shopkeeper Login</button>
+  </div>
 </div>
 
 <!-- ==================== VIEW 2: SUBSCRIPTION LOCK SCREEN ==================== -->
@@ -109,7 +137,87 @@
   </div>
 </div>
 
-<!-- ==================== VIEW 3: MAIN POS APPLICATION ==================== -->
+<!-- ==================== VIEW 3: SUPER-ADMIN DASHBOARD ==================== -->
+<div id="adminDashboardView" class="container hidden">
+  <div class="header">
+    <div>
+      <h2>🔑 Super-Admin SaaS Control</h2>
+      <div class="shop-meta">Master Client Registry & Subscription Manager</div>
+    </div>
+    <div class="status-bar">
+      <button class="btn-logout" onclick="refreshAdminShops()">🔄 Refresh</button>
+      <button class="btn-logout" onclick="exitAdminPortal()">Exit Admin</button>
+    </div>
+  </div>
+
+  <div style="padding:20px;">
+    <div id="adminAlert" class="alert"></div>
+
+    <!-- Enroll New Shop Form -->
+    <div class="pos-entry-box">
+      <h4 style="margin-bottom:12px;">➕ Onboard New Shopkeeper</h4>
+      <form onsubmit="adminCreateShop(event)">
+        <div class="grid-2">
+          <div>
+            <label>Shop Name *</label>
+            <input type="text" id="newShopName" placeholder="e.g. Kangaru Mini-Mart" required>
+          </div>
+          <div>
+            <label>Owner Full Name</label>
+            <input type="text" id="newOwnerName" placeholder="e.g. Peter Kamau">
+          </div>
+        </div>
+        <div class="grid-3">
+          <div>
+            <label>Owner Phone</label>
+            <input type="text" id="newOwnerPhone" placeholder="+2547...">
+          </div>
+          <div>
+            <label>Owner Email (For Alerts)</label>
+            <input type="email" id="newOwnerEmail" placeholder="shop@gmail.com">
+          </div>
+          <div>
+            <label>Initial Cashier PIN *</label>
+            <input type="text" id="newCashierPin" value="1234" required>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <label>Subscription Expiry Date *</label>
+            <input type="date" id="newExpiryDate" required>
+          </div>
+          <div style="display:flex; align-items:end;">
+            <button type="submit" id="createShopBtn" class="btn btn-green" style="margin-top:0;">🚀 Create Shop & Generate DB</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Enrolled Shops List -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+      <h4>📋 Enrolled Shops (<span id="adminShopCount">0</span>)</h4>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Shop ID & Name</th>
+            <th>Owner / PIN</th>
+            <th>Status</th>
+            <th>Expiry Date</th>
+            <th>Last Sync</th>
+            <th>Quick Controls</th>
+          </tr>
+        </thead>
+        <tbody id="adminShopsTableBody">
+          <tr><td colspan="6" style="text-align:center;color:#64748b;">Loading shops...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== VIEW 4: MAIN SHOPKEEPER POS APP ==================== -->
 <div id="appView" class="container hidden">
   <div class="header">
     <div>
@@ -294,7 +402,6 @@
   // =========================================================================
   const API_URL = "https://script.google.com/macros/s/AKfycbyM0xc0JwL1UNwBn1IICSH5TxiZLDDPamnQE_ecTzi-jlXTrHqWolSS7i8qYyq21J7j/exec";
 
-  // LocalStorage Keys
   const STORAGE_KEYS = {
     AUTH: "pos_tenant_auth",
     SHOP_META: "pos_tenant_meta",
@@ -305,13 +412,12 @@
 
   let cart = [];
   let isSyncing = false;
+  let activeAdminKey = ""; // Kept in memory only during active admin session
 
-  // Register Service Worker for Offline App Shell
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js").catch(err => console.warn("SW failed:", err));
   }
 
-  // Listen for Online / Offline network transitions
   window.addEventListener("online", () => {
     updateNetworkUI();
     syncWithServer();
@@ -320,6 +426,8 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     updateNetworkUI();
+    setDefaultNewExpiryDate();
+
     const auth = getStoredAuth();
     if (auth && auth.shopId && auth.pin) {
       showAppFromLocalCache();
@@ -329,15 +437,226 @@
     }
   });
 
-  // =========================================================================
-  // VIEW & NETWORK STATUS HELPERS
-  // =========================================================================
   function showView(viewId) {
-    ["loginView", "lockedView", "appView"].forEach(id => {
+    ["loginView", "adminLoginView", "lockedView", "adminDashboardView", "appView"].forEach(id => {
       document.getElementById(id).classList.toggle("hidden", id !== viewId);
     });
   }
 
+  // =========================================================================
+  // SUPER-ADMIN PORTAL LOGIC
+  // =========================================================================
+  function setDefaultNewExpiryDate() {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    const pad = n => String(n).padStart(2, "0");
+    document.getElementById("newExpiryDate").value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  async function handleAdminLogin(e) {
+    e.preventDefault();
+    if (!navigator.onLine) {
+      document.getElementById("adminLoginError").textContent = "Internet connection required for Admin Console.";
+      return;
+    }
+
+    const key = document.getElementById("masterAdminKeyInput").value.trim();
+    const errEl = document.getElementById("adminLoginError");
+    const btn = document.getElementById("adminLoginBtn");
+
+    errEl.textContent = "";
+    btn.disabled = true;
+    btn.textContent = "Verifying Key...";
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "admin_list_shops", adminKey: key })
+      });
+      const data = await res.json();
+
+      if (!data.ok) {
+        errEl.textContent = data.error || "Invalid Master Admin Key.";
+        return;
+      }
+
+      activeAdminKey = key;
+      document.getElementById("masterAdminKeyInput").value = "";
+      renderAdminShopsTable(data.shops || []);
+      showView("adminDashboardView");
+    } catch (err) {
+      errEl.textContent = "Network error connecting to backend.";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Access Admin Console";
+    }
+  }
+
+  function exitAdminPortal() {
+    activeAdminKey = "";
+    showView("loginView");
+  }
+
+  async function refreshAdminShops() {
+    if (!activeAdminKey) return;
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "admin_list_shops", adminKey: activeAdminKey })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        renderAdminShopsTable(data.shops || []);
+        showAdminAlert("🔄 Shop registry refreshed.");
+      }
+    } catch (e) {
+      alert("Failed to refresh shop list.");
+    }
+  }
+
+  async function adminCreateShop(e) {
+    e.preventDefault();
+    const btn = document.getElementById("createShopBtn");
+    btn.disabled = true;
+    btn.textContent = "Creating Shop...";
+
+    try {
+      const payload = {
+        shopName: document.getElementById("newShopName").value,
+        ownerName: document.getElementById("newOwnerName").value,
+        ownerPhone: document.getElementById("newOwnerPhone").value,
+        ownerEmail: document.getElementById("newOwnerEmail").value,
+        cashierPin: document.getElementById("newCashierPin").value,
+        expiryDate: document.getElementById("newExpiryDate").value
+      };
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "admin_create_shop",
+          adminKey: activeAdminKey,
+          payload: payload
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+
+      e.target.reset();
+      document.getElementById("newCashierPin").value = "1234";
+      setDefaultNewExpiryDate();
+      renderAdminShopsTable(data.shops || []);
+
+      showAdminAlert(
+        `✅ Enrolled ${data.created.shopName}! Assigned Shop ID: ${data.created.shopId} | PIN: ${data.created.pin}`
+      );
+    } catch (err) {
+      alert("❌ Network error creating shop.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "🚀 Create Shop & Generate DB";
+    }
+  }
+
+  async function adminUpdateShop(shopId, updates) {
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "admin_update_shop",
+          adminKey: activeAdminKey,
+          payload: { shopId, ...updates }
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+
+      renderAdminShopsTable(data.shops || []);
+      showAdminAlert("✅ " + data.message);
+    } catch (e) {
+      alert("❌ Network error updating shop.");
+    }
+  }
+
+  function extendShop30Days(shopId, currentExpiry) {
+    const base = currentExpiry && currentExpiry > new Date().toISOString().slice(0, 10)
+      ? new Date(currentExpiry + "T00:00:00")
+      : new Date();
+    base.setDate(base.getDate() + 30);
+    const pad = n => String(n).padStart(2, "0");
+    const nextDate = `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`;
+
+    if (confirm(`Extend ${shopId} subscription by 30 days to ${nextDate}?`)) {
+      adminUpdateShop(shopId, { expiryDate: nextDate, planStatus: "ACTIVE" });
+    }
+  }
+
+  function promptCustomExpiry(shopId, currentExpiry) {
+    const newDate = prompt(`Enter new Expiry Date for ${shopId} (YYYY-MM-DD):`, currentExpiry);
+    if (!newDate) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate.trim())) {
+      return alert("Invalid date format. Use YYYY-MM-DD (e.g., 2026-12-31).");
+    }
+    adminUpdateShop(shopId, { expiryDate: newDate.trim() });
+  }
+
+  function renderAdminShopsTable(shops) {
+    document.getElementById("adminShopCount").textContent = shops.length;
+    const tbody = document.getElementById("adminShopsTableBody");
+
+    if (!shops.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#64748b;">No shops enrolled yet. Use the form above to create your first shop.</td></tr>`;
+      return;
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    tbody.innerHTML = shops.map(s => {
+      const isSuspended = s.planStatus !== "ACTIVE";
+      const isExpired = s.expiryDate && todayStr > s.expiryDate;
+      const badgeClass = (isSuspended || isExpired) ? "badge-low" : "badge-ok";
+      const badgeLabel = isSuspended ? "SUSPENDED" : (isExpired ? "EXPIRED" : "ACTIVE");
+
+      const toggleTarget = isSuspended ? "ACTIVE" : "SUSPENDED";
+      const toggleBtnClass = isSuspended ? "btn-sm-green" : "btn-sm-red";
+      const toggleBtnLabel = isSuspended ? "▶ Activate" : "⏸ Suspend";
+
+      return `
+        <tr>
+          <td>
+            <strong>${s.shopId}</strong><br>
+            <span style="font-size:12px;">${s.shopName}</span>
+          </td>
+          <td>
+            <span style="font-size:12px;">${s.ownerName || "--"} (${s.ownerPhone || "No phone"})</span><br>
+            <small style="color:#475569;">PIN: <strong>${s.cashierPin}</strong></small>
+          </td>
+          <td><span class="${badgeClass}">${badgeLabel}</span></td>
+          <td><strong>${s.expiryDate || "--"}</strong></td>
+          <td style="font-size:11px; color:#64748b;">${s.lastSync}</td>
+          <td>
+            <button type="button" class="btn-sm btn-sm-blue" onclick="extendShop30Days('${s.shopId}', '${s.expiryDate}')">+30 Days</button>
+            <button type="button" class="btn-sm btn-sm-blue" onclick="promptCustomExpiry('${s.shopId}', '${s.expiryDate}')">Set Date</button>
+            <button type="button" class="btn-sm ${toggleBtnClass}" onclick="adminUpdateShop('${s.shopId}', { planStatus: '${toggleTarget}' })">${toggleBtnLabel}</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function showAdminAlert(msg) {
+    const box = document.getElementById("adminAlert");
+    box.textContent = msg;
+    box.classList.add("show");
+    setTimeout(() => box.classList.remove("show"), 6000);
+  }
+
+  // =========================================================================
+  // SHOPKEEPER POS NETWORK, AUTH & OFFLINE SYNC ENGINE
+  // =========================================================================
   function updateNetworkUI() {
     const badge = document.getElementById("netBadge");
     if (navigator.onLine) {
@@ -370,9 +689,6 @@
     e.currentTarget.classList.add("active");
   }
 
-  // =========================================================================
-  // AUTHENTICATION & LOCAL CACHE HYDRATION
-  // =========================================================================
   function getStoredAuth() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)); } catch { return null; }
   }
@@ -396,7 +712,6 @@
     btn.disabled = true;
     btn.textContent = "Verifying Shop...";
 
-    // Allow offline re-login if credentials match previously cached shop on this phone
     const existingAuth = getStoredAuth();
     if (!navigator.onLine && existingAuth && existingAuth.shopId === shopId && existingAuth.pin === pin) {
       showAppFromLocalCache();
@@ -421,7 +736,6 @@
         return;
       }
 
-      // Save credentials & offline cache
       localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify({ shopId, pin }));
       localStorage.setItem(STORAGE_KEYS.SHOP_META, JSON.stringify(data.shop));
       localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(data.inventory || []));
@@ -437,7 +751,6 @@
   }
 
   function logoutShop() {
-    // Keep offline queue intact so unsynced sales are never lost
     localStorage.removeItem(STORAGE_KEYS.AUTH);
     showView("loginView");
   }
@@ -454,9 +767,6 @@
     showView("appView");
   }
 
-  // =========================================================================
-  // BACKGROUND SYNC ENGINE (PUSHES OFFLINE RECEIPTS & PULLS FRESH DATA)
-  // =========================================================================
   async function syncWithServer() {
     if (!navigator.onLine || isSyncing) return;
     const auth = getStoredAuth();
@@ -470,7 +780,6 @@
       let data;
 
       if (queue.length > 0) {
-        // Push offline receipts to Code.gs doPost
         const res = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -484,11 +793,9 @@
         data = await res.json();
 
         if (data.ok) {
-          // Clear synced receipts from local queue
           localStorage.setItem(STORAGE_KEYS.OFFLINE_QUEUE, JSON.stringify([]));
         }
       } else {
-        // Pull fresh inventory, stats, and check subscription status
         const url = `${API_URL}?action=bootstrap&shopId=${encodeURIComponent(auth.shopId)}&pin=${encodeURIComponent(auth.pin)}`;
         const res = await fetch(url);
         data = await res.json();
@@ -502,10 +809,8 @@
         return;
       }
 
-      // Update local caches with authoritative server state
       if (data.shop) localStorage.setItem(STORAGE_KEYS.SHOP_META, JSON.stringify(data.shop));
       if (data.inventory) {
-        // Re-apply any brand-new receipts added while sync was in-flight
         const remainingQueue = getOfflineQueue();
         const adjustedInv = applyPendingQueueToInventory(data.inventory, remainingQueue);
         localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(adjustedInv));
@@ -545,7 +850,7 @@
   }
 
   // =========================================================================
-  // POINT OF SALE: TWO-WAY CALCULATOR & OFFLINE-CAPABLE CHECKOUT
+  // POINT OF SALE & INVENTORY UI FUNCTIONS
   // =========================================================================
   function getSelectedProduct() {
     const itemId = document.getElementById("saleItemSelect").value;
@@ -692,17 +997,14 @@
       }))
     };
 
-    // 1. Push receipt to Offline Queue immediately (100% instant even with zero internet)
     const queue = getOfflineQueue();
     queue.push(receiptRecord);
     localStorage.setItem(STORAGE_KEYS.OFFLINE_QUEUE, JSON.stringify(queue));
 
-    // 2. Deduct stock from local cached inventory immediately
     const updatedInv = applyPendingQueueToInventory(getCachedInventory(), [receiptRecord]);
     localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(updatedInv));
     renderInventoryUI(updatedInv);
 
-    // 3. Update local daily stats optimistically so offline reports stay live
     const stats = JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}");
     if (stats.date === dateStr) {
       stats.revenue = Math.round(((stats.revenue || 0) + grandTotal) * 100) / 100;
@@ -723,13 +1025,9 @@
     clearCart();
     updateQueueBadge();
 
-    // 4. Trigger background sync if online
     if (navigator.onLine) syncWithServer();
   }
 
-  // =========================================================================
-  // INVENTORY & REPORTS UI + ONLINE ACTIONS
-  // =========================================================================
   function renderInventoryUI(items) {
     const sel = document.getElementById("saleItemSelect");
     sel.innerHTML = items.length
@@ -854,7 +1152,6 @@
     btn.textContent = "Generating Report...";
 
     try {
-      // Ensure any pending offline sales sync before running the report
       await syncWithServer();
 
       const res = await fetch(API_URL, {
