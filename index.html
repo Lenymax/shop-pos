@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <title>Shop POS & Inventory</title>
+  <link rel="manifest" href="./manifest.json">
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
+    body { background: #f1f5f9; padding: 12px; color: #0f172a; }
+    .container { max-width: 880px; margin: auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }
+    
+    /* Header & Connection Pill */
+    .header { background: #0f172a; color: #fff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .header h2 { font-size: 18px; }
+    .shop-meta { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+    .status-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pill { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .pill-online { background: #065f46; color: #d1fae5; }
+    .pill-offline { background: #991b1b; color: #fee2e2; }
+    .pill-queue { background: #92400e; color: #fef3c7; cursor: pointer; border: none; }
+    .btn-logout { background: #334155; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+
+    /* Login & Subscription Lock Screens */
+    .auth-box { max-width: 400px; margin: 40px auto; background: #fff; padding: 28px; border-radius: 12px; box-shadow: 0 6px 25px rgba(0,0,0,0.1); }
+    .auth-box h2 { margin-bottom: 6px; text-align: center; }
+    .auth-box p { font-size: 13px; color: #64748b; text-align: center; margin-bottom: 20px; }
+    .lock-banner { background: #fef2f2; border: 2px solid #f87171; color: #991b1b; padding: 20px; border-radius: 10px; text-align: center; margin: 20px; }
+
+    /* Navigation Tabs */
+    .tabs { display: flex; background: #e2e8f0; }
+    .tab { flex: 1; padding: 14px 8px; border: none; background: none; font-weight: 600; cursor: pointer; color: #475569; font-size: 13px; }
+    .tab.active { background: #fff; color: #2563eb; border-bottom: 3px solid #2563eb; }
+    .panel { display: none; padding: 20px; }
+    .panel.active { display: block; }
+
+    /* Forms & Inputs */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .pos-entry-box { background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 18px; }
+    .grid-qty-amount { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; margin-top: 12px; }
+    label { display: block; font-size: 11px; font-weight: 700; margin-bottom: 5px; color: #334155; text-transform: uppercase; letter-spacing: 0.4px; }
+    input, select { width: 100%; padding: 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: #fff; }
+    input:focus, select:focus { outline: none; border-color: #2563eb; }
+
+    /* Buttons */
+    .btn { width: 100%; padding: 13px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 10px; font-size: 15px; }
+    .btn:hover { background: #1d4ed8; }
+    .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-green { background: #059669; }
+    .btn-green:hover { background: #047857; }
+    .btn-add-cart { padding: 10px 18px; background: #0f172a; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; height: 42px; white-space: nowrap; }
+    .btn-qty { flex: 1; padding: 5px 4px; background: #e2e8f0; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .btn-remove { padding: 4px 9px; background: #fee2e2; color: #b91c1c; border: none; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .btn-restock { padding: 6px 12px; background: #2563eb; color: #fff; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+    /* Cart & Tables */
+    .cart-box { border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 15px; background: #f8fafc; margin-bottom: 18px; overflow-x: auto; }
+    .cart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .clear-cart-link { font-size: 12px; color: #dc2626; cursor: pointer; text-decoration: underline; background: none; border: none; }
+    .summary-box { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px; border-radius: 6px; text-align: center; }
+    .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; text-align: center; }
+    .card h4 { font-size: 11px; color: #64748b; text-transform: uppercase; }
+    .card p { font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: #fff; }
+    th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    th { background: #f1f5f9; }
+    .badge-low { background: #fee2e2; color: #b91c1c; padding: 3px 8px; border-radius: 12px; font-weight: 600; font-size: 11px; }
+    .badge-ok { background: #d1fae5; color: #065f46; padding: 3px 8px; border-radius: 12px; font-weight: 600; font-size: 11px; }
+    .alert { padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none; font-size: 14px; }
+    .alert.show { display: block; background: #dbeafe; color: #1e3a8a; }
+    .helper-hint { font-size: 11px; color: #64748b; margin-top: 4px; }
+    .hidden { display: none !important; }
+    @media(max-width:650px){ .grid-2, .grid-qty-amount, .stat-cards { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<!-- ==================== VIEW 1: SHOP LOGIN SCREEN ==================== -->
+<div id="loginView" class="auth-box">
+  <h2>🏪 Shop POS Login</h2>
+  <p>Enter your Shop ID and Cashier PIN to connect</p>
+  <form onsubmit="handleLogin(event)">
+    <div style="margin-bottom:14px;">
+      <label>Shop ID</label>
+      <input type="text" id="loginShopId" placeholder="e.g. SHOP-101" required style="text-transform:uppercase;">
+    </div>
+    <div style="margin-bottom:16px;">
+      <label>Cashier PIN</label>
+      <input type="password" id="loginPin" inputmode="numeric" placeholder="••••" required>
+    </div>
+    <button type="submit" id="loginBtn" class="btn">Unlock POS</button>
+    <p id="loginError" style="color:#dc2626; margin-top:12px; font-weight:600;"></p>
+  </form>
+</div>
+
+<!-- ==================== VIEW 2: SUBSCRIPTION LOCK SCREEN ==================== -->
+<div id="lockedView" class="container hidden">
+  <div class="header">
+    <h2>🏪 Shop POS & Inventory</h2>
+    <button class="btn-logout" onclick="logoutShop()">Switch Shop</button>
+  </div>
+  <div class="lock-banner">
+    <h3>🔒 Account Suspended or Expired</h3>
+    <p id="lockReasonText" style="margin:12px 0; font-size:14px;"></p>
+    <p style="font-size:13px; color:#7f1d1d;">Please contact your system provider to renew your maintenance plan, then tap Retry below.</p>
+    <button class="btn" style="max-width:220px; margin:15px auto 0;" onclick="syncWithServer()">🔄 Retry Connection</button>
+  </div>
+</div>
+
+<!-- ==================== VIEW 3: MAIN POS APPLICATION ==================== -->
+<div id="appView" class="container hidden">
+  <div class="header">
+    <div>
+      <h2 id="headerShopName">🏪 Shop POS</h2>
+      <div class="shop-meta" id="headerShopMeta">ID: -- | Valid until: --</div>
+    </div>
+    <div class="status-bar">
+      <span id="netBadge" class="pill pill-online">● ONLINE</span>
+      <button id="queueBadge" class="pill pill-queue hidden" onclick="syncWithServer()">⏳ 0 Unsynced (Tap to Sync)</button>
+      <button class="btn-logout" onclick="logoutShop()">Lock</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab(event, 'pos')">🛒 Record Sale</button>
+    <button class="tab" onclick="showTab(event, 'inventory')">📦 Inventory</button>
+    <button class="tab" onclick="showTab(event, 'analytics')">📈 Reports</button>
+  </div>
+
+  <!-- TAB 1: POINT OF SALE -->
+  <div id="pos" class="panel active">
+    <div id="posAlert" class="alert"></div>
+
+    <div class="pos-entry-box">
+      <div>
+        <label>1. Select Product</label>
+        <select id="saleItemSelect" onchange="onProductSelectChange()">
+          <option value="">-- Choose Product --</option>
+        </select>
+      </div>
+
+      <div class="grid-qty-amount">
+        <div>
+          <label>2A. Quantity (Units / Kg / L)</label>
+          <input type="number" id="saleQty" min="0.001" step="any" value="1" oninput="syncFromQty()">
+          <div style="display:flex; gap:5px; margin-top:6px;">
+            <button type="button" class="btn-qty" onclick="setQuickQty(0.25)">¼ (0.25)</button>
+            <button type="button" class="btn-qty" onclick="setQuickQty(0.5)">½ (0.5)</button>
+            <button type="button" class="btn-qty" onclick="setQuickQty(0.75)">¾ (0.75)</button>
+            <button type="button" class="btn-qty" onclick="setQuickQty(1)">1</button>
+          </div>
+        </div>
+
+        <div>
+          <label>2B. Or Sell by Cash Amount</label>
+          <input type="number" id="saleCashAmount" min="0.01" step="any" placeholder="e.g. 50" oninput="syncFromCashAmount()">
+          <div class="helper-hint">Auto-calculates exact weight/qty</div>
+        </div>
+
+        <button type="button" class="btn-add-cart" onclick="addItemToCart()">➕ Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="cart-box">
+      <div class="cart-header">
+        <h4>🧾 Current Receipt (<span id="cartItemCount">0</span> items)</h4>
+        <button type="button" class="clear-cart-link" onclick="clearCart()">Clear Cart</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Unit Price</th>
+            <th>Qty</th>
+            <th>Subtotal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="cartTableBody">
+          <tr><td colspan="5" style="text-align:center;color:#64748b;">Cart is empty. Select a product above.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <label>Payment Mode</label>
+        <select id="paymentMode">
+          <option value="Cash">Cash</option>
+          <option value="Mobile Money">Mobile Money (M-Pesa / Airtel)</option>
+          <option value="Card">Card</option>
+        </select>
+      </div>
+      <div class="summary-box">
+        <small>Grand Total</small>
+        <h2 id="cartGrandTotal" style="color:#059669;">0.00</h2>
+      </div>
+    </div>
+
+    <button type="button" id="checkoutBtn" class="btn btn-green" onclick="completeCheckout()" disabled>
+      ✅ Complete Checkout
+    </button>
+  </div>
+
+  <!-- TAB 2: INVENTORY -->
+  <div id="inventory" class="panel">
+    <div id="invAlert" class="alert"></div>
+    <h4 style="margin-bottom:10px;">Add New Product (Requires Internet)</h4>
+    <form onsubmit="addNewProduct(event)">
+      <div class="grid-2">
+        <div>
+          <label>Product Name</label>
+          <input type="text" id="prodName" placeholder="e.g. Sugar (per Kg)" required>
+        </div>
+        <div>
+          <label>Category</label>
+          <input type="text" id="prodCat" placeholder="e.g. Groceries" required>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div>
+          <label>Buying Price (Cost)</label>
+          <input type="number" id="prodBuy" step="any" required>
+        </div>
+        <div>
+          <label>Selling Price</label>
+          <input type="number" id="prodSell" step="any" required>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div>
+          <label>Initial Stock Qty</label>
+          <input type="number" id="prodStock" min="0" step="any" required>
+        </div>
+        <div>
+          <label>Low Stock Alert Level</label>
+          <input type="number" id="prodReorder" value="5" min="0.1" step="any" required>
+        </div>
+      </div>
+      <button type="submit" id="addProdBtn" class="btn btn-green">➕ Save Product to Inventory</button>
+    </form>
+
+    <h4 style="margin-top:25px;">Current Stock Levels (Offline Cached)</h4>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Product</th>
+            <th>Sell Price</th>
+            <th>In Stock</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="inventoryTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 3: REPORTS & ANALYTICS -->
+  <div id="analytics" class="panel">
+    <h4 style="margin-bottom:12px;">Today's Sales Breakdown (<span id="todayDateLabel">--</span>)</h4>
+    <div class="stat-cards">
+      <div class="card">
+        <h4>Today's Revenue</h4>
+        <p id="dayRevenue" style="color:#2563eb;">0.00</p>
+      </div>
+      <div class="card">
+        <h4>Today's Net Profit</h4>
+        <p id="dayProfit" style="color:#059669;">0.00</p>
+      </div>
+      <div class="card">
+        <h4>Customer Receipts</h4>
+        <p id="dayTx">0</p>
+      </div>
+    </div>
+
+    <div class="card" style="text-align:left; margin-bottom:20px;">
+      <p style="font-size:14px;"><strong>🏆 Top Selling Item Today:</strong> <span id="dayTopItem">None</span></p>
+      <p style="font-size:14px; margin-top:8px;"><strong>💳 Sales by Payment Mode:</strong> <span id="dayPayments">--</span></p>
+    </div>
+
+    <button class="btn" id="weeklyBtn" onclick="triggerWeeklyReport()">📊 Generate 7-Day Weekly Report Now</button>
+    <div id="weeklyResult" class="summary-box" style="display:none; text-align:left; margin-top:15px;"></div>
+  </div>
+</div>
+
+<script>
+  // =========================================================================
+  // REPLACE WITH YOUR DEPLOYED MASTER APPS SCRIPT /exec URL
+  // =========================================================================
+  const API_URL = "https://script.google.com/macros/s/AKfycbyM0xc0JwL1UNwBn1IICSH5TxiZLDDPamnQE_ecTzi-jlXTrHqWolSS7i8qYyq21J7j/exec";
+
+  // LocalStorage Keys
+  const STORAGE_KEYS = {
+    AUTH: "pos_tenant_auth",
+    SHOP_META: "pos_tenant_meta",
+    INVENTORY: "pos_tenant_inventory",
+    DAILY_STATS: "pos_tenant_daily_stats",
+    OFFLINE_QUEUE: "pos_offline_receipt_queue"
+  };
+
+  let cart = [];
+  let isSyncing = false;
+
+  // Register Service Worker for Offline App Shell
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js").catch(err => console.warn("SW failed:", err));
+  }
+
+  // Listen for Online / Offline network transitions
+  window.addEventListener("online", () => {
+    updateNetworkUI();
+    syncWithServer();
+  });
+  window.addEventListener("offline", updateNetworkUI);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    updateNetworkUI();
+    const auth = getStoredAuth();
+    if (auth && auth.shopId && auth.pin) {
+      showAppFromLocalCache();
+      if (navigator.onLine) syncWithServer();
+    } else {
+      showView("loginView");
+    }
+  });
+
+  // =========================================================================
+  // VIEW & NETWORK STATUS HELPERS
+  // =========================================================================
+  function showView(viewId) {
+    ["loginView", "lockedView", "appView"].forEach(id => {
+      document.getElementById(id).classList.toggle("hidden", id !== viewId);
+    });
+  }
+
+  function updateNetworkUI() {
+    const badge = document.getElementById("netBadge");
+    if (navigator.onLine) {
+      badge.textContent = "● ONLINE";
+      badge.className = "pill pill-online";
+    } else {
+      badge.textContent = "● OFFLINE MODE";
+      badge.className = "pill pill-offline";
+    }
+    updateQueueBadge();
+  }
+
+  function updateQueueBadge() {
+    const queue = getOfflineQueue();
+    const qBadge = document.getElementById("queueBadge");
+    if (queue.length > 0) {
+      qBadge.classList.remove("hidden");
+      qBadge.textContent = isSyncing
+        ? `🔄 Syncing ${queue.length}...`
+        : `⏳ ${queue.length} Unsynced (Tap to Sync)`;
+    } else {
+      qBadge.classList.add("hidden");
+    }
+  }
+
+  function showTab(e, id) {
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    e.currentTarget.classList.add("active");
+  }
+
+  // =========================================================================
+  // AUTHENTICATION & LOCAL CACHE HYDRATION
+  // =========================================================================
+  function getStoredAuth() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)); } catch { return null; }
+  }
+
+  function getCachedInventory() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.INVENTORY)) || []; } catch { return []; }
+  }
+
+  function getOfflineQueue() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.OFFLINE_QUEUE)) || []; } catch { return []; }
+  }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const shopId = document.getElementById("loginShopId").value.trim().toUpperCase();
+    const pin = document.getElementById("loginPin").value.trim();
+    const errEl = document.getElementById("loginError");
+    const btn = document.getElementById("loginBtn");
+
+    errEl.textContent = "";
+    btn.disabled = true;
+    btn.textContent = "Verifying Shop...";
+
+    // Allow offline re-login if credentials match previously cached shop on this phone
+    const existingAuth = getStoredAuth();
+    if (!navigator.onLine && existingAuth && existingAuth.shopId === shopId && existingAuth.pin === pin) {
+      showAppFromLocalCache();
+      btn.disabled = false;
+      btn.textContent = "Unlock POS";
+      return;
+    }
+
+    try {
+      const url = `${API_URL}?action=bootstrap&shopId=${encodeURIComponent(shopId)}&pin=${encodeURIComponent(pin)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!data.ok) {
+        if (data.locked) {
+          localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify({ shopId, pin }));
+          document.getElementById("lockReasonText").textContent = data.error;
+          showView("lockedView");
+        } else {
+          errEl.textContent = data.error || "Login failed.";
+        }
+        return;
+      }
+
+      // Save credentials & offline cache
+      localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify({ shopId, pin }));
+      localStorage.setItem(STORAGE_KEYS.SHOP_META, JSON.stringify(data.shop));
+      localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(data.inventory || []));
+      localStorage.setItem(STORAGE_KEYS.DAILY_STATS, JSON.stringify(data.dailyStats || {}));
+
+      showAppFromLocalCache();
+    } catch (err) {
+      errEl.textContent = "Network error. Connect to internet for first-time login.";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Unlock POS";
+    }
+  }
+
+  function logoutShop() {
+    // Keep offline queue intact so unsynced sales are never lost
+    localStorage.removeItem(STORAGE_KEYS.AUTH);
+    showView("loginView");
+  }
+
+  function showAppFromLocalCache() {
+    const meta = JSON.parse(localStorage.getItem(STORAGE_KEYS.SHOP_META) || "{}");
+    document.getElementById("headerShopName").textContent = `🏪 ${meta.shopName || "Shop POS"}`;
+    document.getElementById("headerShopMeta").textContent =
+      `ID: ${meta.shopId || "--"} | Plan Valid Until: ${meta.expiryDate || "--"}`;
+
+    renderInventoryUI(getCachedInventory());
+    renderAnalyticsUI(JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}"));
+    updateQueueBadge();
+    showView("appView");
+  }
+
+  // =========================================================================
+  // BACKGROUND SYNC ENGINE (PUSHES OFFLINE RECEIPTS & PULLS FRESH DATA)
+  // =========================================================================
+  async function syncWithServer() {
+    if (!navigator.onLine || isSyncing) return;
+    const auth = getStoredAuth();
+    if (!auth) return;
+
+    isSyncing = true;
+    updateQueueBadge();
+
+    try {
+      const queue = getOfflineQueue();
+      let data;
+
+      if (queue.length > 0) {
+        // Push offline receipts to Code.gs doPost
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "sync_sales",
+            shopId: auth.shopId,
+            pin: auth.pin,
+            payload: { receipts: queue }
+          })
+        });
+        data = await res.json();
+
+        if (data.ok) {
+          // Clear synced receipts from local queue
+          localStorage.setItem(STORAGE_KEYS.OFFLINE_QUEUE, JSON.stringify([]));
+        }
+      } else {
+        // Pull fresh inventory, stats, and check subscription status
+        const url = `${API_URL}?action=bootstrap&shopId=${encodeURIComponent(auth.shopId)}&pin=${encodeURIComponent(auth.pin)}`;
+        const res = await fetch(url);
+        data = await res.json();
+      }
+
+      if (!data.ok) {
+        if (data.locked) {
+          document.getElementById("lockReasonText").textContent = data.error;
+          showView("lockedView");
+        }
+        return;
+      }
+
+      // Update local caches with authoritative server state
+      if (data.shop) localStorage.setItem(STORAGE_KEYS.SHOP_META, JSON.stringify(data.shop));
+      if (data.inventory) {
+        // Re-apply any brand-new receipts added while sync was in-flight
+        const remainingQueue = getOfflineQueue();
+        const adjustedInv = applyPendingQueueToInventory(data.inventory, remainingQueue);
+        localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(adjustedInv));
+        renderInventoryUI(adjustedInv);
+      }
+      if (data.dailyStats) {
+        localStorage.setItem(STORAGE_KEYS.DAILY_STATS, JSON.stringify(data.dailyStats));
+        renderAnalyticsUI(data.dailyStats);
+      }
+
+      showView("appView");
+    } catch (e) {
+      console.warn("Background sync deferred:", e.message);
+    } finally {
+      isSyncing = false;
+      updateQueueBadge();
+    }
+  }
+
+  function applyPendingQueueToInventory(serverInventory, pendingQueue) {
+    if (!pendingQueue.length) return serverInventory;
+    const deducted = {};
+    pendingQueue.forEach(rcp => {
+      (rcp.items || []).forEach(line => {
+        deducted[line.itemId] = (deducted[line.itemId] || 0) + Number(line.qty);
+      });
+    });
+    return serverInventory.map(item => {
+      const sub = deducted[item.itemId] || 0;
+      const newStock = Math.max(0, Math.round((item.stock - sub) * 1000) / 1000);
+      return {
+        ...item,
+        stock: newStock,
+        status: newStock <= item.reorderLevel ? "LOW STOCK" : "IN STOCK"
+      };
+    });
+  }
+
+  // =========================================================================
+  // POINT OF SALE: TWO-WAY CALCULATOR & OFFLINE-CAPABLE CHECKOUT
+  // =========================================================================
+  function getSelectedProduct() {
+    const itemId = document.getElementById("saleItemSelect").value;
+    return getCachedInventory().find(i => i.itemId === itemId) || null;
+  }
+
+  function onProductSelectChange() {
+    document.getElementById("saleQty").value = 1;
+    syncFromQty();
+  }
+
+  function setQuickQty(val) {
+    document.getElementById("saleQty").value = val;
+    syncFromQty();
+  }
+
+  function syncFromQty() {
+    const product = getSelectedProduct();
+    const qty = Number(document.getElementById("saleQty").value);
+    const cashInput = document.getElementById("saleCashAmount");
+    if (!product || isNaN(qty) || qty <= 0) {
+      cashInput.value = "";
+      return;
+    }
+    cashInput.value = (Math.round(qty * product.sellPrice * 100) / 100).toFixed(2);
+  }
+
+  function syncFromCashAmount() {
+    const product = getSelectedProduct();
+    const cash = Number(document.getElementById("saleCashAmount").value);
+    const qtyInput = document.getElementById("saleQty");
+    if (!product) {
+      alert("Please select a product first.");
+      document.getElementById("saleCashAmount").value = "";
+      return;
+    }
+    if (isNaN(cash) || cash <= 0 || product.sellPrice <= 0) {
+      qtyInput.value = "";
+      return;
+    }
+    qtyInput.value = Math.round((cash / product.sellPrice) * 1000) / 1000;
+  }
+
+  function addItemToCart() {
+    const product = getSelectedProduct();
+    const qty = Number(document.getElementById("saleQty").value);
+    if (!product) return alert("Please select a product first.");
+    if (isNaN(qty) || qty <= 0) return alert("Enter a valid quantity or cash amount.");
+
+    const existing = cart.find(c => c.itemId === product.itemId);
+    const totalPlannedQty = Math.round(((existing ? existing.qty : 0) + qty) * 1000) / 1000;
+
+    if (totalPlannedQty > product.stock) {
+      return alert(`❌ Not enough stock for ${product.name}! Only ${product.stock} available.`);
+    }
+
+    if (existing) {
+      existing.qty = totalPlannedQty;
+    } else {
+      cart.push({
+        itemId: product.itemId,
+        name: product.name,
+        sellPrice: product.sellPrice,
+        buyPrice: product.buyPrice,
+        qty: Math.round(qty * 1000) / 1000
+      });
+    }
+
+    document.getElementById("saleItemSelect").value = "";
+    document.getElementById("saleQty").value = 1;
+    document.getElementById("saleCashAmount").value = "";
+    renderCart();
+  }
+
+  function removeFromCart(idx) {
+    cart.splice(idx, 1);
+    renderCart();
+  }
+
+  function clearCart() {
+    cart = [];
+    renderCart();
+  }
+
+  function renderCart() {
+    const tbody = document.getElementById("cartTableBody");
+    const btn = document.getElementById("checkoutBtn");
+    let total = 0;
+
+    if (!cart.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#64748b;">Cart is empty. Select a product above.</td></tr>`;
+      document.getElementById("cartItemCount").textContent = "0";
+      document.getElementById("cartGrandTotal").textContent = "0.00";
+      btn.disabled = true;
+      return;
+    }
+
+    tbody.innerHTML = cart.map((item, idx) => {
+      const sub = Math.round(item.sellPrice * item.qty * 100) / 100;
+      total += sub;
+      return `
+        <tr>
+          <td><strong>${item.name}</strong></td>
+          <td>${item.sellPrice.toFixed(2)}</td>
+          <td>${item.qty}</td>
+          <td>${sub.toFixed(2)}</td>
+          <td><button type="button" class="btn-remove" onclick="removeFromCart(${idx})">✕</button></td>
+        </tr>
+      `;
+    }).join("");
+
+    document.getElementById("cartItemCount").textContent = cart.length;
+    document.getElementById("cartGrandTotal").textContent = total.toFixed(2);
+    btn.disabled = false;
+  }
+
+  function completeCheckout() {
+    if (!cart.length) return;
+
+    const now = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const receiptId = "RCP-" + Date.now().toString().slice(-6) + "-" + Math.floor(10 + Math.random() * 90);
+    const paymentMode = document.getElementById("paymentMode").value;
+
+    let grandTotal = 0;
+    let totalProfit = 0;
+    cart.forEach(c => {
+      grandTotal += c.sellPrice * c.qty;
+      totalProfit += (c.sellPrice - c.buyPrice) * c.qty;
+    });
+
+    const receiptRecord = {
+      receiptId,
+      date: dateStr,
+      time: timeStr,
+      paymentMode,
+      items: cart.map(c => ({
+        itemId: c.itemId,
+        name: c.name,
+        qty: c.qty,
+        sellPrice: c.sellPrice
+      }))
+    };
+
+    // 1. Push receipt to Offline Queue immediately (100% instant even with zero internet)
+    const queue = getOfflineQueue();
+    queue.push(receiptRecord);
+    localStorage.setItem(STORAGE_KEYS.OFFLINE_QUEUE, JSON.stringify(queue));
+
+    // 2. Deduct stock from local cached inventory immediately
+    const updatedInv = applyPendingQueueToInventory(getCachedInventory(), [receiptRecord]);
+    localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(updatedInv));
+    renderInventoryUI(updatedInv);
+
+    // 3. Update local daily stats optimistically so offline reports stay live
+    const stats = JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}");
+    if (stats.date === dateStr) {
+      stats.revenue = Math.round(((stats.revenue || 0) + grandTotal) * 100) / 100;
+      stats.profit = Math.round(((stats.profit || 0) + totalProfit) * 100) / 100;
+      stats.count = (stats.count || 0) + 1;
+      stats.byPayment = stats.byPayment || {};
+      stats.byPayment[paymentMode] = Math.round(((stats.byPayment[paymentMode] || 0) + grandTotal) * 100) / 100;
+      localStorage.setItem(STORAGE_KEYS.DAILY_STATS, JSON.stringify(stats));
+      renderAnalyticsUI(stats);
+    }
+
+    const alertBox = document.getElementById("posAlert");
+    alertBox.textContent = `✅ Receipt ${receiptId} saved (${grandTotal.toFixed(2)})!` +
+      (navigator.onLine ? " Syncing to cloud..." : " Saved offline — will auto-sync when online.");
+    alertBox.classList.add("show");
+    setTimeout(() => alertBox.classList.remove("show"), 5000);
+
+    clearCart();
+    updateQueueBadge();
+
+    // 4. Trigger background sync if online
+    if (navigator.onLine) syncWithServer();
+  }
+
+  // =========================================================================
+  // INVENTORY & REPORTS UI + ONLINE ACTIONS
+  // =========================================================================
+  function renderInventoryUI(items) {
+    const sel = document.getElementById("saleItemSelect");
+    sel.innerHTML = items.length
+      ? `<option value="">-- Choose Product --</option>` +
+        items.map(i => `<option value="${i.itemId}">${i.name} (${i.sellPrice.toFixed(2)} | Stock: ${i.stock})</option>`).join("")
+      : `<option value="">No products yet</option>`;
+
+    const tbody = document.getElementById("inventoryTableBody");
+    tbody.innerHTML = items.length
+      ? items.map(i => `
+          <tr>
+            <td>${i.itemId}</td>
+            <td>${i.name}</td>
+            <td>${i.sellPrice.toFixed(2)}</td>
+            <td><strong>${i.stock}</strong></td>
+            <td><span class="${i.stock <= i.reorderLevel ? 'badge-low' : 'badge-ok'}">${i.status}</span></td>
+            <td>
+              <button type="button" class="btn-restock" onclick="promptRestock('${i.itemId}', '${i.name.replace(/'/g, "\\'")}')">+ Restock</button>
+            </td>
+          </tr>
+        `).join("")
+      : `<tr><td colspan="6" style="text-align:center;color:#64748b;">No products added yet.</td></tr>`;
+  }
+
+  async function addNewProduct(e) {
+    e.preventDefault();
+    if (!navigator.onLine) return alert("⚠️ You are offline. Connect to internet to register new products.");
+
+    const auth = getStoredAuth();
+    const btn = document.getElementById("addProdBtn");
+    btn.disabled = true;
+    btn.textContent = "Saving...";
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "add_product",
+          shopId: auth.shopId,
+          pin: auth.pin,
+          payload: {
+            name: document.getElementById("prodName").value,
+            category: document.getElementById("prodCat").value,
+            buyPrice: document.getElementById("prodBuy").value,
+            sellPrice: document.getElementById("prodSell").value,
+            stock: document.getElementById("prodStock").value,
+            reorderLevel: document.getElementById("prodReorder").value
+          }
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+
+      localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(data.inventory));
+      renderInventoryUI(data.inventory);
+      e.target.reset();
+
+      const alertBox = document.getElementById("invAlert");
+      alertBox.textContent = "✅ " + data.result.message;
+      alertBox.classList.add("show");
+      setTimeout(() => alertBox.classList.remove("show"), 4000);
+    } catch (err) {
+      alert("❌ Network error while saving product.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "➕ Save Product to Inventory";
+    }
+  }
+
+  async function promptRestock(itemId, itemName) {
+    if (!navigator.onLine) return alert("⚠️ Connect to internet to record supplier restocks.");
+    const input = prompt(`How many new units/kg of "${itemName}" (${itemId}) are you adding?`);
+    if (input === null) return;
+    const addQty = Number(input);
+    if (isNaN(addQty) || addQty <= 0) return alert("Enter a valid quantity > 0.");
+
+    const auth = getStoredAuth();
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "restock_product",
+          shopId: auth.shopId,
+          pin: auth.pin,
+          payload: { itemId, addQty }
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+
+      localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(data.inventory));
+      renderInventoryUI(data.inventory);
+
+      const alertBox = document.getElementById("invAlert");
+      alertBox.textContent = "✅ " + data.result.message;
+      alertBox.classList.add("show");
+      setTimeout(() => alertBox.classList.remove("show"), 4000);
+    } catch (err) {
+      alert("❌ Network error while restocking.");
+    }
+  }
+
+  function renderAnalyticsUI(stats) {
+    document.getElementById("todayDateLabel").textContent = stats.date || "--";
+    document.getElementById("dayRevenue").textContent = (Number(stats.revenue) || 0).toFixed(2);
+    document.getElementById("dayProfit").textContent = (Number(stats.profit) || 0).toFixed(2);
+    document.getElementById("dayTx").textContent = stats.count || 0;
+    document.getElementById("dayTopItem").textContent = stats.topItem || "None";
+
+    const paySummary = Object.entries(stats.byPayment || {})
+      .map(([k, v]) => `${k}: ${Number(v).toFixed(2)}`).join(" | ") || "No sales yet";
+    document.getElementById("dayPayments").textContent = paySummary;
+  }
+
+  async function triggerWeeklyReport() {
+    if (!navigator.onLine) return alert("⚠️ Connect to internet to generate the 7-day cloud report.");
+    const auth = getStoredAuth();
+    const btn = document.getElementById("weeklyBtn");
+    btn.disabled = true;
+    btn.textContent = "Generating Report...";
+
+    try {
+      // Ensure any pending offline sales sync before running the report
+      await syncWithServer();
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "weekly_report",
+          shopId: auth.shopId,
+          pin: auth.pin,
+          payload: {}
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+
+      const rep = data.result;
+      const box = document.getElementById("weeklyResult");
+      box.style.display = "block";
+      box.innerHTML = `
+        <strong>📅 Weekly Report Saved (${rep.period})</strong><br>
+        • Total Revenue: <strong>${rep.totalRev.toFixed(2)}</strong><br>
+        • Total Profit: <strong>${rep.totalProfit.toFixed(2)}</strong><br>
+        • Customer Receipts: <strong>${rep.txCount}</strong><br>
+        • Top Seller: <strong>${rep.topItem}</strong><br>
+        • Low Stock Items: <strong>${rep.lowStockList}</strong>
+      `;
+    } catch (err) {
+      alert("❌ Network error generating report.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "📊 Generate 7-Day Weekly Report Now";
+    }
+  }
+</script>
+</body>
+</html>
