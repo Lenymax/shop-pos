@@ -397,9 +397,6 @@
 </div>
 
 <script>
-  // =========================================================================
-  // REPLACE WITH YOUR DEPLOYED MASTER APPS SCRIPT /exec URL
-  // =========================================================================
   const API_URL = "https://script.google.com/macros/s/AKfycbyM0xc0JwL1UNwBn1IICSH5TxiZLDDPamnQE_ecTzi-jlXTrHqWolSS7i8qYyq21J7j/exec";
 
   const STORAGE_KEYS = {
@@ -412,7 +409,7 @@
 
   let cart = [];
   let isSyncing = false;
-  let activeAdminKey = ""; // Kept in memory only during active admin session
+  let activeAdminKey = "";
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js").catch(err => console.warn("SW failed:", err));
@@ -712,7 +709,7 @@
     }
   }
 
-function showTab(e, id) {
+  function showTab(e, id) {
     document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     document.getElementById(id).classList.add("active");
@@ -1039,7 +1036,7 @@ function showTab(e, id) {
     localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(updatedInv));
     renderInventoryUI(updatedInv);
 
-const stats = JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}");
+    const stats = JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}");
     if (!stats.date || stats.date === dateStr) {
       stats.date = dateStr;
       stats.revenue = Math.round(((stats.revenue || 0) + grandTotal) * 100) / 100;
