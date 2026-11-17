@@ -682,11 +682,15 @@
     }
   }
 
-  function showTab(e, id) {
+function showTab(e, id) {
     document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
     document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
     document.getElementById(id).classList.add("active");
     e.currentTarget.classList.add("active");
+    if (id === "analytics") {
+      renderAnalyticsUI(JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}"));
+      if (navigator.onLine) syncWithServer();
+    }
   }
 
   function getStoredAuth() {
@@ -1005,8 +1009,9 @@
     localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(updatedInv));
     renderInventoryUI(updatedInv);
 
-    const stats = JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}");
-    if (stats.date === dateStr) {
+const stats = JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}");
+    if (!stats.date || stats.date === dateStr) {
+      stats.date = dateStr;
       stats.revenue = Math.round(((stats.revenue || 0) + grandTotal) * 100) / 100;
       stats.profit = Math.round(((stats.profit || 0) + totalProfit) * 100) / 100;
       stats.count = (stats.count || 0) + 1;
