@@ -43,8 +43,8 @@
     .pos-entry-box { background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 18px; }
     .grid-qty-amount { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; margin-top: 12px; }
     label { display: block; font-size: 11px; font-weight: 700; margin-bottom: 5px; color: #334155; text-transform: uppercase; letter-spacing: 0.4px; }
-    input, select { width: 100%; padding: 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: #fff; }
-    input:focus, select:focus { outline: none; border-color: #2563eb; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: #fff; font-family: inherit; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #2563eb; }
 
     /* Buttons */
     .btn { width: 100%; padding: 13px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 8px; font-size: 15px; }
@@ -152,6 +152,102 @@
 
   <div style="padding:20px;">
     <div id="adminAlert" class="alert"></div>
+
+    <!-- Super-Admin Navigation Tabs -->
+    <div class="tabs" style="border-radius:8px; overflow:hidden; margin-bottom:18px;">
+      <button type="button" class="tab active" id="btnAdminTabShops" onclick="showAdminSubTab('adminTabShops', this)">🏪 Shops & Billing</button>
+      <button type="button" class="tab" id="btnAdminTabAnalytics" onclick="showAdminSubTab('adminTabAnalytics', this)">📊 Top Performing Shops</button>
+      <button type="button" class="tab" id="btnAdminTabOutreach" onclick="showAdminSubTab('adminTabOutreach', this)">✉️ Financial Advisory</button>
+    </div>
+
+    <!-- SUB-TAB 1: SHOPS & BILLING (Wrap your existing Onboarding Form + Shops Table inside this div) -->
+    <div id="adminTabShops" class="admin-subpanel">
+      <!-- Keep your existing "Onboard New Shopkeeper" form and "Enrolled Shops" table here -->
+    </div>
+
+    <!-- SUB-TAB 2: NETWORK ANALYTICS & TOP SHOPS LEADERBOARD -->
+    <div id="adminTabAnalytics" class="admin-subpanel hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h4>📈 7-Day Network Performance (<span id="netAnalyticsTime">--</span>)</h4>
+        <button type="button" class="btn-sm btn-sm-blue" onclick="loadNetworkAnalytics(true)">🔄 Recalculate Live</button>
+      </div>
+
+      <div class="stat-cards">
+        <div class="card">
+          <h4>Today's Network Sales</h4>
+          <p id="netTodayRev" style="color:#2563eb;">0.00</p>
+        </div>
+        <div class="card">
+          <h4>7-Day Total Sales</h4>
+          <p id="net7dRev" style="color:#0f172a;">0.00</p>
+        </div>
+        <div class="card">
+          <h4>7-Day Net Profit</h4>
+          <p id="net7dProfit" style="color:#059669;">0.00</p>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Shop</th>
+              <th>Today Sales</th>
+              <th>7-Day Sales</th>
+              <th>7-Day Profit</th>
+              <th>Receipts</th>
+              <th>Outreach</th>
+            </tr>
+          </thead>
+          <tbody id="adminLeaderboardBody">
+            <tr><td colspan="7" style="text-align:center;color:#64748b;">Tap "Top Performing Shops" to load analytics...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SUB-TAB 3: SPECIALIZED FINANCIAL ADVISORY (EMAIL & WHATSAPP) -->
+    <div id="adminTabOutreach" class="admin-subpanel hidden">
+      <div class="pos-entry-box">
+        <h4 style="margin-bottom:10px;">📊 Generate Shop Financial Analysis & Recommendations</h4>
+        <div class="grid-2">
+          <div>
+            <label>1. Select Shopkeeper</label>
+            <select id="advisoryShopSelect" onchange="fetchShopAdvisoryDraft()">
+              <option value="">-- Select a Shop --</option>
+            </select>
+          </div>
+          <div>
+            <label>2. Quick Recommendation Template</label>
+            <select id="advisoryTemplateSelect" onchange="applyAdvisoryTemplate()">
+              <option value="weekly_review">Weekly Financial Health & Growth Review</option>
+              <option value="restock_focus">Low-Stock & Fast-Mover Restock Advisory</option>
+              <option value="inactive_nudge">Re-Engagement & POS Sync Check-In</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="advisoryContactSummary" class="helper-hint" style="margin-bottom:12px; font-size:12px;">
+          Select a shop above to auto-load their 7-day revenue, profit margin, and contact details.
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label>Email Subject</label>
+          <input type="text" id="advisorySubject" placeholder="Subject line...">
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label>Advisory Message (Editable before sending)</label>
+          <textarea id="advisoryBody" rows="9" placeholder="Financial analysis and recommendations will appear here..."></textarea>
+        </div>
+
+        <div class="grid-2">
+          <button type="button" id="sendAdvisoryEmailBtn" class="btn btn-green" onclick="sendAdvisoryEmailNow()">📧 Send via Email</button>
+          <button type="button" id="sendAdvisoryWaBtn" class="btn btn-dark" onclick="openAdvisoryWhatsApp()">💬 Send via WhatsApp (Phone)</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Enroll New Shop Form -->
     <div class="pos-entry-box">
@@ -679,6 +775,203 @@
     box.textContent = msg;
     box.classList.add("show");
     setTimeout(() => box.classList.remove("show"), 6000);
+  }
+
+  let activeAdvisoryData = null;
+
+  function showAdminSubTab(panelId, btnEl) {
+    document.querySelectorAll(".admin-subpanel").forEach(p => p.classList.add("hidden"));
+    document.querySelectorAll("#adminDashboardView .tabs .tab").forEach(t => t.classList.remove("active"));
+    document.getElementById(panelId).classList.remove("hidden");
+    if (btnEl) btnEl.classList.add("active");
+
+    if (panelId === "adminTabAnalytics") {
+      loadNetworkAnalytics(false);
+    }
+    if (panelId === "adminTabOutreach") {
+      populateAdvisoryShopDropdown();
+    }
+  }
+
+  async function loadNetworkAnalytics(forceRefresh) {
+    if (!activeAdminKey) return;
+    const tbody = document.getElementById("adminLeaderboardBody");
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#64748b;">⏳ Aggregating sales across enrolled shops...</td></tr>`;
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "admin_network_analytics",
+          adminKey: activeAdminKey,
+          forceRefresh: Boolean(forceRefresh)
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+
+      const a = data.analytics;
+      document.getElementById("netAnalyticsTime").textContent = a.generatedAt || "--";
+      document.getElementById("netTodayRev").textContent = (a.todayRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+      document.getElementById("net7dRev").textContent = (a.totalRevenue7d || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+      document.getElementById("net7dProfit").textContent = (a.totalProfit7d || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+      const rows = a.leaderboard || [];
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#64748b;">No sales data recorded yet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map((s, idx) => {
+        const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
+        return `
+          <tr>
+            <td><strong>${medal}</strong></td>
+            <td><strong>${s.shopName}</strong><br><small style="color:#64748b;">${s.shopId} (${s.ownerName || "Owner"})</small></td>
+            <td>${s.todayRev.toFixed(2)}</td>
+            <td><strong>${s.rev7d.toFixed(2)}</strong></td>
+            <td style="color:#059669; font-weight:700;">${s.profit7d.toFixed(2)}</td>
+            <td>${s.receipts7d}</td>
+            <td>
+              <button type="button" class="btn-sm btn-sm-blue" onclick="jumpToShopAdvisory('${s.shopId}')">✉️ Advise</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    } catch (e) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#dc2626;">Failed to load network analytics.</td></tr>`;
+    }
+  }
+
+  function populateAdvisoryShopDropdown(preselectShopId) {
+    const sel = document.getElementById("advisoryShopSelect");
+    sel.innerHTML = `<option value="">-- Select a Shop --</option>` +
+      allAdminShops.map(s => `<option value="${s.shopId}">${s.shopId} — ${s.shopName} (${s.ownerName || "Owner"})</option>`).join("");
+
+    if (preselectShopId) {
+      sel.value = preselectShopId;
+      fetchShopAdvisoryDraft();
+    }
+  }
+
+  function jumpToShopAdvisory(shopId) {
+    showAdminSubTab("adminTabOutreach", document.getElementById("btnAdminTabOutreach"));
+    populateAdvisoryShopDropdown(shopId);
+  }
+
+  async function fetchShopAdvisoryDraft() {
+    const shopId = document.getElementById("advisoryShopSelect").value;
+    if (!shopId) return;
+
+    document.getElementById("advisoryContactSummary").textContent = "⏳ Fetching shop's 7-day sales & inventory metrics...";
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "admin_shop_advisory_data",
+          adminKey: activeAdminKey,
+          payload: { shopId }
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+
+      activeAdvisoryData = data.advisory;
+      document.getElementById("advisoryContactSummary").innerHTML =
+        `📧 Email: <strong>${activeAdvisoryData.ownerEmail || "None saved"}</strong> | 📱 Phone: <strong>${activeAdvisoryData.ownerPhone || "None saved"}</strong>`;
+
+      applyAdvisoryTemplate();
+    } catch (e) {
+      alert("❌ Network error loading shop metrics.");
+    }
+  }
+
+  function applyAdvisoryTemplate() {
+    if (!activeAdvisoryData) return;
+    const d = activeAdvisoryData;
+    const tpl = document.getElementById("advisoryTemplateSelect").value;
+
+    if (tpl === "weekly_review") {
+      document.getElementById("advisorySubject").value = `📊 Weekly Financial Analysis & Growth Tips — ${d.shopName}`;
+      document.getElementById("advisoryBody").value =
+        `Hello ${d.ownerName},\n\n` +
+        `Here is your 7-day financial performance snapshot for ${d.shopName} (${d.shopId}):\n\n` +
+        `• 7-Day Total Sales: ${d.rev7d.toFixed(2)}\n` +
+        `• 7-Day Net Profit: ${d.profit7d.toFixed(2)} (${d.marginPct}% profit margin)\n` +
+        `• Customer Receipts Logged: ${d.receipts7d}\n` +
+        `• Top Moving Product: ${d.topProduct}\n` +
+        `• Low-Stock Watchlist: ${d.lowStockList}\n\n` +
+        `💡 Recommendations for Next Week:\n` +
+        `1. Keep your top seller (${d.topProduct}) well-stocked ahead of peak weekend hours.\n` +
+        `2. Review items on your low-stock watchlist so you do not lose daily cash sales to stockouts.\n` +
+        `3. Continue recording every sale in your POS to track daily profit margins accurately.\n\n` +
+        `Reply to this message anytime if you need help adding new products or adjusting prices.\n— Your POS Business Advisor`;
+    } else if (tpl === "restock_focus") {
+      document.getElementById("advisorySubject").value = `⚠️ Restock & Margin Opportunity Alert — ${d.shopName}`;
+      document.getElementById("advisoryBody").value =
+        `Hello ${d.ownerName},\n\n` +
+        `Based on your recent POS activity at ${d.shopName}, your top-performing item is ${d.topProduct}, and your current low-stock items are:\n` +
+        `${d.lowStockList}\n\n` +
+        `💡 Recommended Action:\n` +
+        `Prioritize restocking these fast-moving items within the next 24–48 hours and record the new stock under the "Inventory" tab (+ Restock) to keep your profit margin (${d.marginPct}%) growing.\n\n` +
+        `— Your POS Business Advisor`;
+    } else {
+      document.getElementById("advisorySubject").value = `👋 Quick POS Check-In & Sales Tip — ${d.shopName}`;
+      document.getElementById("advisoryBody").value =
+        `Hello ${d.ownerName},\n\n` +
+        `We noticed fewer synced receipts recently for ${d.shopName} (${d.receipts7d} receipts in the last 7 days). Remember that you can record sales even without internet—just tap the orange "Unsynced" badge whenever your data connection is back on.\n\n` +
+        `Let us know if you need any training or support for your staff!\n— Your POS Support Team`;
+    }
+  }
+
+  async function sendAdvisoryEmailNow() {
+    const shopId = document.getElementById("advisoryShopSelect").value;
+    const subject = document.getElementById("advisorySubject").value.trim();
+    const messageBody = document.getElementById("advisoryBody").value.trim();
+    if (!shopId || !subject || !messageBody) return alert("Select a shop and fill in the subject and message.");
+
+    const btn = document.getElementById("sendAdvisoryEmailBtn");
+    btn.disabled = true;
+    btn.textContent = "Sending Email...";
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "admin_send_advisory_email",
+          adminKey: activeAdminKey,
+          payload: { shopId, subject, messageBody }
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+
+      showAdminAlert("✅ " + data.message);
+    } catch (e) {
+      alert("❌ Network error sending email.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "📧 Send via Email";
+    }
+  }
+
+  function openAdvisoryWhatsApp() {
+    if (!activeAdvisoryData) return alert("Please select a shop first.");
+    const rawPhone = String(activeAdvisoryData.ownerPhone || "").replace(/[^\d]/g, "");
+    if (!rawPhone) return alert(`No phone number saved for ${activeAdvisoryData.shopName}.`);
+
+    // Normalize Kenyan 07... / 01... numbers to 254... automatically
+    const intlPhone = rawPhone.startsWith("0") && rawPhone.length === 10
+      ? "254" + rawPhone.slice(1)
+      : rawPhone;
+
+    const text = document.getElementById("advisoryBody").value.trim();
+    const waUrl = `https://wa.me/${intlPhone}?text=${encodeURIComponent(text)}`;
+    window.open(waUrl, "_blank");
   }
 
   // =========================================================================
