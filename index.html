@@ -589,8 +589,10 @@
       }
 
       activeAdminKey = key;
+      allAdminShops = data.shops || [];
       document.getElementById("masterAdminKeyInput").value = "";
-      renderAdminShopsTable(data.shops || []);
+      renderAdminShopsTable(allAdminShops);
+      populateAdvisoryShopDropdown();
       showView("adminDashboardView");
     } catch (err) {
       errEl.textContent = "Network error connecting to backend.";
@@ -615,7 +617,9 @@
       });
       const data = await res.json();
       if (data.ok) {
-        renderAdminShopsTable(data.shops || []);
+        allAdminShops = data.shops || [];
+        renderAdminShopsTable(allAdminShops);
+        populateAdvisoryShopDropdown();
         showAdminAlert("🔄 Shop registry refreshed.");
       }
     } catch (e) {
@@ -862,7 +866,7 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
     const sel = document.getElementById("advisoryShopSelect");
     if (!sel) return;
 
-    // If allAdminShops is empty, fetch the shop list from the backend automatically
+    // 1. If allAdminShops is empty, try fetching fresh from backend
     if ((!allAdminShops || allAdminShops.length === 0) && activeAdminKey) {
       sel.innerHTML = `<option value="">⏳ Loading shops...</option>`;
       try {
@@ -876,17 +880,23 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
           allAdminShops = data.shops;
         }
       } catch (e) {
-        console.warn("Could not auto-fetch shops for dropdown:", e.message);
+        console.warn("Dropdown fetch fallback error:", e.message);
       }
     }
 
+    // 2. Build options list
     if (!allAdminShops || allAdminShops.length === 0) {
-      sel.innerHTML = `<option value="">No enrolled shops found</option>`;
+      sel.innerHTML = `<option value="">No enrolled shops found (Tap Refresh)</option>`;
       return;
     }
 
-    sel.innerHTML = `<option value="">-- Select a Shop --</option>` +
-      allAdminShops.map(s => `<option value="${s.shopId}">${s.shopId} — ${s.shopName} (${s.ownerName || "Owner"})</option>`).join("");
+    sel.innerHTML = `<option value="">-- Tap to Choose a Shop (${allAdminShops.length} available) --</option>` +
+      allAdminShops.map(s => {
+        const id = String(s.shopId || "").trim();
+        const name = String(s.shopName || "").trim();
+        const owner = String(s.ownerName || "Owner").trim();
+        return `<option value="${id}">${id} — ${name} (${owner})</option>`;
+      }).join("");
 
     if (preselectShopId) {
       sel.value = preselectShopId;
