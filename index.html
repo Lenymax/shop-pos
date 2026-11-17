@@ -160,12 +160,87 @@
       <button type="button" class="tab" id="btnAdminTabOutreach" onclick="showAdminSubTab('adminTabOutreach', this)">✉️ Financial Advisory</button>
     </div>
 
-    <!-- SUB-TAB 1: SHOPS & BILLING (Wrap your existing Onboarding Form + Shops Table inside this div) -->
+    <!-- ==================== SUB-TAB 1: SHOPS & BILLING ONLY ==================== -->
     <div id="adminTabShops" class="admin-subpanel">
-      <!-- Keep your existing "Onboard New Shopkeeper" form and "Enrolled Shops" table here -->
+      <!-- Enroll New Shop Form -->
+      <div class="pos-entry-box">
+        <h4 style="margin-bottom:12px;">➕ Onboard New Shopkeeper</h4>
+        <form onsubmit="adminCreateShop(event)">
+          <div class="grid-2">
+            <div>
+              <label>Shop Name *</label>
+              <input type="text" id="newShopName" placeholder="e.g. Kangaru Mini-Mart" required>
+            </div>
+            <div>
+              <label>Owner Full Name</label>
+              <input type="text" id="newOwnerName" placeholder="e.g. Peter Kamau">
+            </div>
+          </div>
+          <div class="grid-3">
+            <div>
+              <label>Owner Phone</label>
+              <input type="text" id="newOwnerPhone" placeholder="+2547...">
+            </div>
+            <div>
+              <label>Owner Email (For Alerts)</label>
+              <input type="email" id="newOwnerEmail" placeholder="shop@gmail.com">
+            </div>
+            <div>
+              <label>Initial Cashier PIN *</label>
+              <input type="text" id="newCashierPin" value="1234" required>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label>Subscription Expiry Date *</label>
+              <input type="date" id="newExpiryDate" required>
+            </div>
+            <div style="display:flex; align-items:end;">
+              <button type="submit" id="createShopBtn" class="btn btn-green" style="margin-top:0;">🚀 Create Shop & Generate DB</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Enrolled Shops Search & Filter Toolbar -->
+      <div class="admin-toolbar">
+        <h4>📋 Enrolled Shops (<span id="adminShopCount">0</span>)</h4>
+        <input
+          type="text"
+          id="adminSearchInput"
+          class="admin-search-input"
+          placeholder="🔍 Search Shop ID, Name, Owner, or Phone..."
+          oninput="applyAdminFilters()"
+        >
+        <div class="filter-pills" id="adminFilterPills">
+          <button type="button" class="filter-pill active" data-filter="ALL" onclick="setAdminStatusFilter('ALL', this)">All (<span id="countAll">0</span>)</button>
+          <button type="button" class="filter-pill" data-filter="ACTIVE" onclick="setAdminStatusFilter('ACTIVE', this)">Active (<span id="countActive">0</span>)</button>
+          <button type="button" class="filter-pill" data-filter="EXPIRING" onclick="setAdminStatusFilter('EXPIRING', this)">⏳ Expiring Soon (<span id="countExpiring">0</span>)</button>
+          <button type="button" class="filter-pill" data-filter="SUSPENDED" onclick="setAdminStatusFilter('SUSPENDED', this)">🔒 Suspended / Expired (<span id="countSuspended">0</span>)</button>
+        </div>
+      </div>
+
+      <!-- Enrolled Shops Table -->
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Shop ID & Name</th>
+              <th>Owner / PIN</th>
+              <th>Status</th>
+              <th>Expiry Date</th>
+              <th>Last Sync</th>
+              <th>Quick Controls</th>
+            </tr>
+          </thead>
+          <tbody id="adminShopsTableBody">
+            <tr><td colspan="6" style="text-align:center;color:#64748b;">Loading shops...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- SUB-TAB 2: NETWORK ANALYTICS & TOP SHOPS LEADERBOARD -->
+    <!-- ==================== SUB-TAB 2: TOP PERFORMING SHOPS ONLY ==================== -->
     <div id="adminTabAnalytics" class="admin-subpanel hidden">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <h4>📈 7-Day Network Performance (<span id="netAnalyticsTime">--</span>)</h4>
@@ -207,7 +282,7 @@
       </div>
     </div>
 
-    <!-- SUB-TAB 3: SPECIALIZED FINANCIAL ADVISORY (EMAIL & WHATSAPP) -->
+    <!-- ==================== SUB-TAB 3: FINANCIAL ADVISORY ONLY ==================== -->
     <div id="adminTabOutreach" class="admin-subpanel hidden">
       <div class="pos-entry-box">
         <h4 style="margin-bottom:10px;">📊 Generate Shop Financial Analysis & Recommendations</h4>
@@ -249,67 +324,6 @@
       </div>
     </div>
 
-    <!-- Enroll New Shop Form -->
-    <div class="pos-entry-box">
-      <h4 style="margin-bottom:12px;">➕ Onboard New Shopkeeper</h4>
-      <form onsubmit="adminCreateShop(event)">
-        <div class="grid-2">
-          <div>
-            <label>Shop Name *</label>
-            <input type="text" id="newShopName" placeholder="e.g. Kangaru Mini-Mart" required>
-          </div>
-          <div>
-            <label>Owner Full Name</label>
-            <input type="text" id="newOwnerName" placeholder="e.g. Peter Kamau">
-          </div>
-        </div>
-        <div class="grid-3">
-          <div>
-            <label>Owner Phone</label>
-            <input type="text" id="newOwnerPhone" placeholder="+2547...">
-          </div>
-          <div>
-            <label>Owner Email (For Alerts)</label>
-            <input type="email" id="newOwnerEmail" placeholder="shop@gmail.com">
-          </div>
-          <div>
-            <label>Initial Cashier PIN *</label>
-            <input type="text" id="newCashierPin" value="1234" required>
-          </div>
-        </div>
-        <div class="grid-2">
-          <div>
-            <label>Subscription Expiry Date *</label>
-            <input type="date" id="newExpiryDate" required>
-          </div>
-          <div style="display:flex; align-items:end;">
-            <button type="submit" id="createShopBtn" class="btn btn-green" style="margin-top:0;">🚀 Create Shop & Generate DB</button>
-          </div>
-        </div>
-      </form>
-    </div>
-
-    <!-- Enrolled Shops List -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
-      <h4>📋 Enrolled Shops (<span id="adminShopCount">0</span>)</h4>
-    </div>
-    <div style="overflow-x:auto;">
-      <table>
-        <thead>
-          <tr>
-            <th>Shop ID & Name</th>
-            <th>Owner / PIN</th>
-            <th>Status</th>
-            <th>Expiry Date</th>
-            <th>Last Sync</th>
-            <th>Quick Controls</th>
-          </tr>
-        </thead>
-        <tbody id="adminShopsTableBody">
-          <tr><td colspan="6" style="text-align:center;color:#64748b;">Loading shops...</td></tr>
-        </tbody>
-      </table>
-    </div>
   </div>
 </div>
 
@@ -844,8 +858,33 @@
     }
   }
 
-  function populateAdvisoryShopDropdown(preselectShopId) {
+async function populateAdvisoryShopDropdown(preselectShopId) {
     const sel = document.getElementById("advisoryShopSelect");
+    if (!sel) return;
+
+    // If allAdminShops is empty, fetch the shop list from the backend automatically
+    if ((!allAdminShops || allAdminShops.length === 0) && activeAdminKey) {
+      sel.innerHTML = `<option value="">⏳ Loading shops...</option>`;
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "admin_list_shops", adminKey: activeAdminKey })
+        });
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.shops)) {
+          allAdminShops = data.shops;
+        }
+      } catch (e) {
+        console.warn("Could not auto-fetch shops for dropdown:", e.message);
+      }
+    }
+
+    if (!allAdminShops || allAdminShops.length === 0) {
+      sel.innerHTML = `<option value="">No enrolled shops found</option>`;
+      return;
+    }
+
     sel.innerHTML = `<option value="">-- Select a Shop --</option>` +
       allAdminShops.map(s => `<option value="${s.shopId}">${s.shopId} — ${s.shopName} (${s.ownerName || "Owner"})</option>`).join("");
 
