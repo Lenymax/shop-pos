@@ -581,6 +581,35 @@
     }
   }
 
+  async function adminDeleteShop(shopId, shopName) {
+    const confirmation = prompt(
+      `⚠️ PERMANENT ACTION:\nType "${shopId}" below to delete "${shopName}" and move its sales/inventory spreadsheet to Drive Trash:`
+    );
+    if (confirmation === null) return;
+    if (confirmation.trim().toUpperCase() !== shopId.toUpperCase()) {
+      return alert("❌ Deletion cancelled — Shop ID did not match.");
+    }
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "admin_delete_shop",
+          adminKey: activeAdminKey,
+          payload: { shopId }
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+
+      renderAdminShopsTable(data.shops || []);
+      showAdminAlert("🗑️ " + data.message);
+    } catch (e) {
+      alert("❌ Network error deleting shop.");
+    }
+  }
+
   function extendShop30Days(shopId, currentExpiry) {
     const base = currentExpiry && currentExpiry > new Date().toISOString().slice(0, 10)
       ? new Date(currentExpiry + "T00:00:00")
@@ -637,10 +666,11 @@
           <td><span class="${badgeClass}">${badgeLabel}</span></td>
           <td><strong>${s.expiryDate || "--"}</strong></td>
           <td style="font-size:11px; color:#64748b;">${s.lastSync}</td>
-          <td>
+<td>
             <button type="button" class="btn-sm btn-sm-blue" onclick="extendShop30Days('${s.shopId}', '${s.expiryDate}')">+30 Days</button>
             <button type="button" class="btn-sm btn-sm-blue" onclick="promptCustomExpiry('${s.shopId}', '${s.expiryDate}')">Set Date</button>
             <button type="button" class="btn-sm ${toggleBtnClass}" onclick="adminUpdateShop('${s.shopId}', { planStatus: '${toggleTarget}' })">${toggleBtnLabel}</button>
+            <button type="button" class="btn-sm btn-sm-red" onclick="adminDeleteShop('${s.shopId}', '${s.shopName.replace(/'/g, "\\'")}')">🗑 Delete</button>
           </td>
         </tr>
       `;
