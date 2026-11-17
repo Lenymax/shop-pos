@@ -666,7 +666,7 @@
           <td><span class="${badgeClass}">${badgeLabel}</span></td>
           <td><strong>${s.expiryDate || "--"}</strong></td>
           <td style="font-size:11px; color:#64748b;">${s.lastSync}</td>
-<td>
+          <td>
             <button type="button" class="btn-sm btn-sm-blue" onclick="extendShop30Days('${s.shopId}', '${s.expiryDate}')">+30 Days</button>
             <button type="button" class="btn-sm btn-sm-blue" onclick="promptCustomExpiry('${s.shopId}', '${s.expiryDate}')">Set Date</button>
             <button type="button" class="btn-sm ${toggleBtnClass}" onclick="adminUpdateShop('${s.shopId}', { planStatus: '${toggleTarget}' })">${toggleBtnLabel}</button>
