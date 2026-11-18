@@ -46,6 +46,13 @@
     input, select, textarea { width: 100%; padding: 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: #fff; font-family: inherit; }
     input:focus, select:focus, textarea:focus { outline: none; border-color: #2563eb; }
 
+    /* Super-Admin Search & Filter Bar */
+    .admin-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 16px 0 10px; }
+    .admin-search-input { flex: 1; min-width: 210px; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
+    .filter-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .filter-pill { padding: 6px 11px; border: 1.5px solid #cbd5e1; background: #f8fafc; color: #334155; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .filter-pill.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+
     /* Buttons */
     .btn { width: 100%; padding: 13px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 8px; font-size: 15px; }
     .btn:hover { background: #1d4ed8; }
@@ -81,6 +88,7 @@
     .helper-hint { font-size: 11px; color: #64748b; margin-top: 4px; }
     .hidden { display: none !important; }
     @media(max-width:650px){ .grid-2, .grid-3, .grid-qty-amount, .stat-cards { grid-template-columns: 1fr; } }
+
     /* Payment Modal & Thermal Receipt Print Styles */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,0.72); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }
     .modal-card { background: #fff; border-radius: 12px; max-width: 420px; width: 100%; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
@@ -173,9 +181,8 @@
       <button type="button" class="tab" id="btnAdminTabOutreach" onclick="showAdminSubTab('adminTabOutreach', this)">✉️ Financial Advisory</button>
     </div>
 
-    <!-- ==================== SUB-TAB 1: SHOPS & BILLING ONLY ==================== -->
+    <!-- SUB-TAB 1: SHOPS & BILLING ONLY -->
     <div id="adminTabShops" class="admin-subpanel">
-      <!-- Enroll New Shop Form -->
       <div class="pos-entry-box">
         <h4 style="margin-bottom:12px;">➕ Onboard New Shopkeeper</h4>
         <form onsubmit="adminCreateShop(event)">
@@ -253,7 +260,7 @@
       </div>
     </div>
 
-    <!-- ==================== SUB-TAB 2: TOP PERFORMING SHOPS ONLY ==================== -->
+    <!-- SUB-TAB 2: TOP PERFORMING SHOPS ONLY -->
     <div id="adminTabAnalytics" class="admin-subpanel hidden">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <h4>📈 7-Day Network Performance (<span id="netAnalyticsTime">--</span>)</h4>
@@ -295,7 +302,7 @@
       </div>
     </div>
 
-    <!-- ==================== SUB-TAB 3: FINANCIAL ADVISORY ONLY ==================== -->
+    <!-- SUB-TAB 3: FINANCIAL ADVISORY ONLY -->
     <div id="adminTabOutreach" class="admin-subpanel hidden">
       <div class="pos-entry-box">
         <h4 style="margin-bottom:10px;">📊 Generate Shop Financial Analysis & Recommendations</h4>
@@ -336,7 +343,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -355,11 +361,11 @@
   </div>
 
   <div class="tabs">
-      <button class="tab active" onclick="switchPosTab('tabSale', this)">🛒 Record Sale</button>
-      <button class="tab" onclick="switchPosTab('tabInventory', this)">📦 Inventory</button>
-      <button class="tab" onclick="switchPosTab('tabAnalytics', this)">📈 Progress & Charts</button>
-      <button class="tab" onclick="switchPosTab('tabHistory', this)">🧾 Sales Log</button>
-    </div>
+    <button type="button" class="tab active" onclick="showTab(event, 'pos')">🛒 Record Sale</button>
+    <button type="button" class="tab" onclick="showTab(event, 'inventory')">📦 Inventory</button>
+    <button type="button" class="tab" onclick="showTab(event, 'tabAnalytics')">📈 Progress & Charts</button>
+    <button type="button" class="tab" onclick="showTab(event, 'analytics')">📊 Daily Reports</button>
+  </div>
 
   <!-- TAB 1: POINT OF SALE -->
   <div id="pos" class="panel active">
@@ -496,16 +502,16 @@
       </table>
     </div>
   </div>
-  
-<!-- TAB 3: SHOP PROGRESS & GRAPHED ANALYTICS -->
+
+  <!-- TAB 3: SHOP PROGRESS & GRAPHED ANALYTICS -->
   <div id="tabAnalytics" class="panel">
     <div class="stat-cards">
       <div class="card">
-        <h4>7-Day Revenue</h4>
+        <h4>Today / Period Revenue</h4>
         <p id="chart7dRev" style="color:#2563eb;">0.00</p>
       </div>
       <div class="card">
-        <h4>7-Day Net Profit</h4>
+        <h4>Net Profit</h4>
         <p id="chart7dProfit" style="color:#059669;">0.00</p>
       </div>
       <div class="card">
@@ -515,16 +521,16 @@
     </div>
 
     <div class="chart-box">
-      <h4 style="margin-bottom:8px;">📊 7-Day Sales vs. Net Profit Trend</h4>
+      <h4 style="margin-bottom:8px;">📊 Sales vs. Net Profit Trend (7 Days)</h4>
       <canvas id="salesTrendCanvas" class="pos-chart" width="640" height="220"></canvas>
     </div>
 
     <div class="chart-box">
-      <h4 style="margin-bottom:8px;">🏆 Top 5 Best-Selling Products (7 Days)</h4>
+      <h4 style="margin-bottom:8px;">🏆 Top 5 Best-Selling Products</h4>
       <canvas id="topProductsCanvas" class="pos-chart" width="640" height="220"></canvas>
     </div>
   </div>
-  
+
   <!-- TAB 4: REPORTS & ANALYTICS -->
   <div id="analytics" class="panel">
     <h4 style="margin-bottom:12px;">Today's Sales Breakdown (<span id="todayDateLabel">--</span>)</h4>
@@ -553,6 +559,33 @@
   </div>
 </div>
 
+<!-- ==================== M-PESA STATUS & PRINTABLE RECEIPT MODAL ==================== -->
+<div id="paymentReceiptModal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <div id="mpesaWaitingState">
+      <h3 style="margin-bottom:8px;">📲 Waiting for Customer PIN...</h3>
+      <p id="mpesaPromptStatusText" style="font-size:13px; color:#475569; margin-bottom:14px;">
+        An M-Pesa prompt has been sent to the customer's phone. Ask them to enter their M-Pesa PIN.
+      </p>
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn btn-dark" onclick="checkMpesaNowManual(false)">🔄 Check Payment Now</button>
+        <button type="button" class="btn-sm btn-sm-red" style="padding:10px 14px;" onclick="cancelMpesaWait()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="receiptConfirmedState" class="hidden">
+      <div style="text-align:center; color:#059669; font-weight:700; margin-bottom:10px;">
+        ✅ Payment Confirmed & Stock Updated!
+      </div>
+      <div id="receiptPrintArea" class="receipt-paper"></div>
+      <div class="grid-2" style="margin-top:14px;">
+        <button type="button" class="btn btn-dark" onclick="window.print()">🖨️ Print Receipt</button>
+        <button type="button" class="btn btn-green" onclick="closeReceiptModal()">Done / Next Sale</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   const API_URL = "https://script.google.com/macros/s/AKfycbyM0xc0JwL1UNwBn1IICSH5TxiZLDDPamnQE_ecTzi-jlXTrHqWolSS7i8qYyq21J7j/exec";
 
@@ -561,12 +594,18 @@
     SHOP_META: "pos_tenant_meta",
     INVENTORY: "pos_tenant_inventory",
     DAILY_STATS: "pos_tenant_daily_stats",
-    OFFLINE_QUEUE: "pos_offline_receipt_queue"
+    OFFLINE_QUEUE: "pos_offline_receipt_queue",
+    SALES_HISTORY: "pos_tenant_sales_history"
   };
 
   let cart = [];
   let isSyncing = false;
   let activeAdminKey = "";
+  let allAdminShops = [];
+  let activeAdminFilter = "ALL";
+  let activeAdvisoryData = null;
+  let activeMpesaCheckoutId = null;
+  let mpesaPollTimer = null;
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js").catch(err => console.warn("SW failed:", err));
@@ -593,8 +632,10 @@
 
   function showView(viewId) {
     ["loginView", "adminLoginView", "lockedView", "adminDashboardView", "appView"].forEach(id => {
-      document.getElementById(id).classList.toggle("hidden", id !== viewId);
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("hidden", id !== viewId);
     });
+    window.scrollTo(0, 0);
   }
 
   // =========================================================================
@@ -705,7 +746,9 @@
       e.target.reset();
       document.getElementById("newCashierPin").value = "1234";
       setDefaultNewExpiryDate();
-      renderAdminShopsTable(data.shops || []);
+      allAdminShops = data.shops || [];
+      renderAdminShopsTable(allAdminShops);
+      populateAdvisoryShopDropdown();
 
       showAdminAlert(
         `✅ Enrolled ${data.created.shopName}! Assigned Shop ID: ${data.created.shopId} | PIN: ${data.created.pin}`
@@ -732,7 +775,8 @@
       const data = await res.json();
       if (!data.ok) return alert("❌ " + data.error);
 
-      renderAdminShopsTable(data.shops || []);
+      allAdminShops = data.shops || [];
+      renderAdminShopsTable(allAdminShops);
       showAdminAlert("✅ " + data.message);
     } catch (e) {
       alert("❌ Network error updating shop.");
@@ -761,7 +805,9 @@
       const data = await res.json();
       if (!data.ok) return alert("❌ " + data.error);
 
-      renderAdminShopsTable(data.shops || []);
+      allAdminShops = data.shops || [];
+      renderAdminShopsTable(allAdminShops);
+      populateAdvisoryShopDropdown();
       showAdminAlert("🗑️ " + data.message);
     } catch (e) {
       alert("❌ Network error deleting shop.");
@@ -790,22 +836,85 @@
     adminUpdateShop(shopId, { expiryDate: newDate.trim() });
   }
 
-  function renderAdminShopsTable(shops) {
-    document.getElementById("adminShopCount").textContent = shops.length;
-    const tbody = document.getElementById("adminShopsTableBody");
+  function promptResetPin(shopId, shopName, currentPin) {
+    const newPin = prompt(`Enter a new Cashier PIN for ${shopName} (${shopId}) (4 to 8 digits):`, currentPin);
+    if (newPin === null) return;
+    const cleanPin = newPin.trim();
+    if (!/^\d{4,8}$/.test(cleanPin)) {
+      return alert("❌ Invalid PIN. Enter 4 to 8 numbers (e.g., 1234).");
+    }
+    adminUpdateShop(shopId, { cashierPin: cleanPin });
+  }
 
-    if (!shops.length) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#64748b;">No shops enrolled yet. Use the form above to create your first shop.</td></tr>`;
+  function setAdminStatusFilter(filterKey, btnEl) {
+    activeAdminFilter = filterKey;
+    document.querySelectorAll("#adminFilterPills .filter-pill").forEach(b => b.classList.remove("active"));
+    if (btnEl) btnEl.classList.add("active");
+    applyAdminFilters();
+  }
+
+  function getShopLifecycleState(shop, todayStr) {
+    if (shop.planStatus !== "ACTIVE") return "SUSPENDED";
+    if (shop.expiryDate && todayStr > shop.expiryDate) return "EXPIRED";
+    if (shop.expiryDate) {
+      const todayMs = new Date(todayStr + "T00:00:00Z").getTime();
+      const expMs = new Date(shop.expiryDate + "T00:00:00Z").getTime();
+      const daysLeft = Math.round((expMs - todayMs) / 86400000);
+      if (daysLeft >= 0 && daysLeft <= 3) return "EXPIRING";
+    }
+    return "ACTIVE";
+  }
+
+  function renderAdminShopsTable(shops) {
+    allAdminShops = Array.isArray(shops) ? shops : [];
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    let cActive = 0, cExpiring = 0, cSuspended = 0;
+    allAdminShops.forEach(s => {
+      const state = getShopLifecycleState(s, todayStr);
+      if (state === "SUSPENDED" || state === "EXPIRED") cSuspended++;
+      else if (state === "EXPIRING") { cActive++; cExpiring++; }
+      else cActive++;
+    });
+
+    document.getElementById("countAll").textContent = allAdminShops.length;
+    document.getElementById("countActive").textContent = cActive;
+    document.getElementById("countExpiring").textContent = cExpiring;
+    document.getElementById("countSuspended").textContent = cSuspended;
+
+    applyAdminFilters();
+  }
+
+  function applyAdminFilters() {
+    const tbody = document.getElementById("adminShopsTableBody");
+    const query = (document.getElementById("adminSearchInput")?.value || "").trim().toLowerCase();
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    const filtered = allAdminShops.filter(s => {
+      const state = getShopLifecycleState(s, todayStr);
+      if (activeAdminFilter === "ACTIVE" && (state === "SUSPENDED" || state === "EXPIRED")) return false;
+      if (activeAdminFilter === "EXPIRING" && state !== "EXPIRING") return false;
+      if (activeAdminFilter === "SUSPENDED" && state !== "SUSPENDED" && state !== "EXPIRED") return false;
+
+      if (query) {
+        const haystack = `${s.shopId} ${s.shopName} ${s.ownerName} ${s.ownerPhone}`.toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
+      return true;
+    });
+
+    document.getElementById("adminShopCount").textContent = `${filtered.length} of ${allAdminShops.length}`;
+
+    if (!filtered.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#64748b;">No matching shops found.</td></tr>`;
       return;
     }
 
-    const todayStr = new Date().toISOString().slice(0, 10);
-
-    tbody.innerHTML = shops.map(s => {
+    tbody.innerHTML = filtered.map(s => {
+      const state = getShopLifecycleState(s, todayStr);
       const isSuspended = s.planStatus !== "ACTIVE";
-      const isExpired = s.expiryDate && todayStr > s.expiryDate;
-      const badgeClass = (isSuspended || isExpired) ? "badge-low" : "badge-ok";
-      const badgeLabel = isSuspended ? "SUSPENDED" : (isExpired ? "EXPIRED" : "ACTIVE");
+      const badgeClass = (state === "SUSPENDED" || state === "EXPIRED") ? "badge-low" : "badge-ok";
+      const badgeLabel = state === "EXPIRING" ? "EXPIRING SOON" : state;
 
       const toggleTarget = isSuspended ? "ACTIVE" : "SUSPENDED";
       const toggleBtnClass = isSuspended ? "btn-sm-green" : "btn-sm-red";
@@ -827,6 +936,7 @@
           <td>
             <button type="button" class="btn-sm btn-sm-blue" onclick="extendShop30Days('${s.shopId}', '${s.expiryDate}')">+30 Days</button>
             <button type="button" class="btn-sm btn-sm-blue" onclick="promptCustomExpiry('${s.shopId}', '${s.expiryDate}')">Set Date</button>
+            <button type="button" class="btn-sm btn-sm-blue" onclick="promptResetPin('${s.shopId}', '${s.shopName.replace(/'/g, "\\'")}', '${s.cashierPin}')">🔑 PIN</button>
             <button type="button" class="btn-sm ${toggleBtnClass}" onclick="adminUpdateShop('${s.shopId}', { planStatus: '${toggleTarget}' })">${toggleBtnLabel}</button>
             <button type="button" class="btn-sm btn-sm-red" onclick="adminDeleteShop('${s.shopId}', '${s.shopName.replace(/'/g, "\\'")}')">🗑 Delete</button>
           </td>
@@ -842,20 +952,14 @@
     setTimeout(() => box.classList.remove("show"), 6000);
   }
 
-  let activeAdvisoryData = null;
-
   function showAdminSubTab(panelId, btnEl) {
     document.querySelectorAll(".admin-subpanel").forEach(p => p.classList.add("hidden"));
     document.querySelectorAll("#adminDashboardView .tabs .tab").forEach(t => t.classList.remove("active"));
     document.getElementById(panelId).classList.remove("hidden");
     if (btnEl) btnEl.classList.add("active");
 
-    if (panelId === "adminTabAnalytics") {
-      loadNetworkAnalytics(false);
-    }
-    if (panelId === "adminTabOutreach") {
-      populateAdvisoryShopDropdown();
-    }
+    if (panelId === "adminTabAnalytics") loadNetworkAnalytics(false);
+    if (panelId === "adminTabOutreach") populateAdvisoryShopDropdown();
   }
 
   async function loadNetworkAnalytics(forceRefresh) {
@@ -909,11 +1013,10 @@
     }
   }
 
-async function populateAdvisoryShopDropdown(preselectShopId) {
+  async function populateAdvisoryShopDropdown(preselectShopId) {
     const sel = document.getElementById("advisoryShopSelect");
     if (!sel) return;
 
-    // 1. If allAdminShops is empty, try fetching fresh from backend
     if ((!allAdminShops || allAdminShops.length === 0) && activeAdminKey) {
       sel.innerHTML = `<option value="">⏳ Loading shops...</option>`;
       try {
@@ -931,7 +1034,6 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
       }
     }
 
-    // 2. Build options list
     if (!allAdminShops || allAdminShops.length === 0) {
       sel.innerHTML = `<option value="">No enrolled shops found (Tap Refresh)</option>`;
       return;
@@ -1060,7 +1162,6 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
     const rawPhone = String(activeAdvisoryData.ownerPhone || "").replace(/[^\d]/g, "");
     if (!rawPhone) return alert(`No phone number saved for ${activeAdvisoryData.shopName}.`);
 
-    // Normalize Kenyan 07... / 01... numbers to 254... automatically
     const intlPhone = rawPhone.startsWith("0") && rawPhone.length === 10
       ? "254" + rawPhone.slice(1)
       : rawPhone;
@@ -1099,10 +1200,15 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
   }
 
   function showTab(e, id) {
-    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    document.getElementById(id).classList.add("active");
-    e.currentTarget.classList.add("active");
+    document.querySelectorAll("#appView .panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll("#appView .tab").forEach(t => t.classList.remove("active"));
+    const target = document.getElementById(id);
+    if (target) target.classList.add("active");
+    if (e && e.currentTarget) e.currentTarget.classList.add("active");
+
+    if (id === "tabAnalytics") {
+      renderShopProgressCharts();
+    }
     if (id === "analytics") {
       renderAnalyticsUI(JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}"));
       if (navigator.onLine) syncWithServer();
@@ -1119,6 +1225,10 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
 
   function getOfflineQueue() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.OFFLINE_QUEUE)) || []; } catch { return []; }
+  }
+
+  function getSalesHistory() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.SALES_HISTORY)) || []; } catch { return []; }
   }
 
   async function handleLogin(e) {
@@ -1183,6 +1293,7 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
 
     renderInventoryUI(getCachedInventory());
     renderAnalyticsUI(JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}"));
+    renderShopProgressCharts();
     updateQueueBadge();
     showView("appView");
   }
@@ -1240,7 +1351,7 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
         localStorage.setItem(STORAGE_KEYS.DAILY_STATS, JSON.stringify(data.dailyStats));
         renderAnalyticsUI(data.dailyStats);
       }
-
+      renderShopProgressCharts();
       showView("appView");
     } catch (e) {
       console.warn("Background sync deferred:", e.message);
@@ -1270,7 +1381,7 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
   }
 
   // =========================================================================
-  // POINT OF SALE & INVENTORY UI FUNCTIONS
+  // POINT OF SALE, M-PESA STK PUSH, RECEIPT PRINTING & INVENTORY UI
   // =========================================================================
   function getSelectedProduct() {
     const itemId = document.getElementById("saleItemSelect").value;
@@ -1387,6 +1498,208 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
     btn.disabled = false;
   }
 
+  function toggleMpesaPhoneBox() {
+    const mode = document.getElementById("paymentMode").value;
+    const phoneBox = document.getElementById("mpesaCustomerPhoneBox");
+    const btn = document.getElementById("checkoutBtn");
+
+    if (mode === "MPESA_STK") {
+      phoneBox.style.display = "block";
+      btn.textContent = "📲 Prompt Customer PIN & Complete Sale";
+    } else {
+      phoneBox.style.display = "none";
+      btn.textContent = "✅ Complete Checkout & Print Receipt";
+    }
+  }
+
+  function captureCartForReceipt(paymentLabel) {
+    if (!cart || cart.length === 0) return null;
+    const total = cart.reduce((sum, item) => sum + (Number(item.qty) * Number(item.sellPrice || 0)), 0);
+    return {
+      receiptId: "RCP-" + Date.now().toString().slice(-6),
+      dateStr: new Date().toISOString().slice(0, 10),
+      timeStr: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      paymentLabel,
+      total,
+      items: cart.map(i => ({
+        name: i.name || "Item",
+        qty: Number(i.qty) || 1,
+        price: Number(i.sellPrice || 0)
+      }))
+    };
+  }
+
+  function showPrintableReceipt(snap) {
+    if (!snap) return;
+    const meta = JSON.parse(localStorage.getItem(STORAGE_KEYS.SHOP_META) || "{}");
+    const shopTitle = meta.shopName || "SHOP POS RECEIPT";
+
+    const itemsHtml = snap.items.map(i =>
+      `<div class="receipt-line"><span>${i.name} x${i.qty}</span><span>${(i.qty * i.price).toFixed(2)}</span></div>`
+    ).join("");
+
+    document.getElementById("receiptPrintArea").innerHTML = `
+      <div style="text-align:center; font-weight:bold; font-size:15px;">${shopTitle}</div>
+      <div style="text-align:center; font-size:11px; margin-bottom:6px;">Shop ID: ${meta.shopId || "--"}</div>
+      <div class="receipt-line"><span>Receipt:</span><span>${snap.receiptId}</span></div>
+      <div class="receipt-line"><span>Date:</span><span>${snap.dateStr} ${snap.timeStr}</span></div>
+      <div class="receipt-line"><span>Payment:</span><span>${snap.paymentLabel}</span></div>
+      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
+      ${itemsHtml}
+      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
+      <div class="receipt-line" style="font-weight:bold; font-size:15px;">
+        <span>TOTAL PAID:</span><span>KES ${snap.total.toFixed(2)}</span>
+      </div>
+      <div style="text-align:center; font-size:11px; margin-top:10px;">Thank you for your business!</div>
+    `;
+
+    document.getElementById("mpesaWaitingState").classList.add("hidden");
+    document.getElementById("receiptConfirmedState").classList.remove("hidden");
+    document.getElementById("paymentReceiptModal").classList.remove("hidden");
+  }
+
+  async function handleCheckoutSubmit() {
+    if (!cart || cart.length === 0) return;
+    const mode = document.getElementById("paymentMode").value;
+
+    if (mode !== "MPESA_STK") {
+      const snap = captureCartForReceipt(mode);
+      completeCheckout();
+      showPrintableReceipt(snap);
+      renderShopProgressCharts();
+      return;
+    }
+
+    const phone = document.getElementById("customerMpesaPhone").value.trim();
+    if (!phone) return alert("Please enter the customer's M-Pesa mobile number (e.g., 0712345678).");
+    if (!navigator.onLine) return alert("M-Pesa STK Push requires an active internet connection.");
+
+    const auth = getStoredAuth();
+    if (!auth) return alert("Session expired. Please log in again.");
+
+    const totalAmount = cart.reduce((sum, item) => sum + (Number(item.qty) * Number(item.sellPrice || 0)), 0);
+    const tempReceiptId = "RCP-" + Date.now().toString().slice(-6);
+
+    const btn = document.getElementById("checkoutBtn");
+    btn.disabled = true;
+    btn.textContent = "⏳ Sending M-Pesa Prompt...";
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "mpesa_stk_push",
+          shopId: auth.shopId,
+          pin: auth.pin,
+          payload: { phone, amount: totalAmount, receiptId: tempReceiptId }
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        alert("❌ " + data.error);
+        btn.disabled = false;
+        toggleMpesaPhoneBox();
+        return;
+      }
+
+      activeMpesaCheckoutId = data.stk.checkoutRequestId;
+      document.getElementById("mpesaPromptStatusText").textContent =
+        `Prompt sent to ${data.stk.phone} for KES ${totalAmount.toFixed(2)}. Ask the customer to enter their M-Pesa PIN...`;
+      document.getElementById("mpesaWaitingState").classList.remove("hidden");
+      document.getElementById("receiptConfirmedState").classList.add("hidden");
+      document.getElementById("paymentReceiptModal").classList.remove("hidden");
+
+      startMpesaPolling();
+    } catch (e) {
+      alert("❌ Network error sending M-Pesa prompt.");
+      btn.disabled = false;
+      toggleMpesaPhoneBox();
+    }
+  }
+
+  function startMpesaPolling() {
+    clearInterval(mpesaPollTimer);
+    let attempts = 0;
+    mpesaPollTimer = setInterval(async () => {
+      attempts++;
+      if (attempts > 18) {
+        clearInterval(mpesaPollTimer);
+        document.getElementById("mpesaPromptStatusText").textContent =
+          "⏱️ Timed out waiting for PIN. Tap 'Check Payment Now' if the customer just confirmed.";
+        return;
+      }
+      await checkMpesaNowManual(true);
+    }, 4000);
+  }
+
+  async function checkMpesaNowManual(isSilent) {
+    if (!activeMpesaCheckoutId) return;
+    const auth = getStoredAuth();
+    if (!auth) return;
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "mpesa_query_status",
+          shopId: auth.shopId,
+          pin: auth.pin,
+          payload: { checkoutRequestId: activeMpesaCheckoutId }
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) return;
+
+      if (data.payment.status === "PAID") {
+        clearInterval(mpesaPollTimer);
+        const refCode = activeMpesaCheckoutId.slice(-8).toUpperCase();
+        const paymentLabel = `M-Pesa (${refCode})`;
+        const snap = captureCartForReceipt(paymentLabel);
+
+        const modeSelect = document.getElementById("paymentMode");
+        const opt = document.createElement("option");
+        opt.value = paymentLabel;
+        opt.text = paymentLabel;
+        modeSelect.add(opt);
+        modeSelect.value = paymentLabel;
+
+        completeCheckout();
+
+        modeSelect.remove(modeSelect.options.length - 1);
+        modeSelect.value = "MPESA_STK";
+        document.getElementById("customerMpesaPhone").value = "";
+        toggleMpesaPhoneBox();
+
+        showPrintableReceipt(snap);
+        renderShopProgressCharts();
+      } else if (data.payment.status === "FAILED") {
+        clearInterval(mpesaPollTimer);
+        document.getElementById("mpesaPromptStatusText").textContent = "❌ " + data.payment.message;
+        document.getElementById("checkoutBtn").disabled = false;
+        toggleMpesaPhoneBox();
+      } else if (!isSilent) {
+        document.getElementById("mpesaPromptStatusText").textContent = "⏳ " + data.payment.message;
+      }
+    } catch (e) {
+      if (!isSilent) alert("Could not check M-Pesa status right now.");
+    }
+  }
+
+  function cancelMpesaWait() {
+    clearInterval(mpesaPollTimer);
+    activeMpesaCheckoutId = null;
+    document.getElementById("paymentReceiptModal").classList.add("hidden");
+    document.getElementById("checkoutBtn").disabled = (cart.length === 0);
+    toggleMpesaPhoneBox();
+  }
+
+  function closeReceiptModal() {
+    document.getElementById("paymentReceiptModal").classList.add("hidden");
+    activeMpesaCheckoutId = null;
+  }
+
   function completeCheckout() {
     if (!cart.length) return;
 
@@ -1413,13 +1726,19 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
         itemId: c.itemId,
         name: c.name,
         qty: c.qty,
-        sellPrice: c.sellPrice
+        sellPrice: c.sellPrice,
+        buyPrice: c.buyPrice
       }))
     };
 
     const queue = getOfflineQueue();
     queue.push(receiptRecord);
     localStorage.setItem(STORAGE_KEYS.OFFLINE_QUEUE, JSON.stringify(queue));
+
+    // Save local history for 7-day charts
+    const hist = getSalesHistory();
+    hist.push(receiptRecord);
+    localStorage.setItem(STORAGE_KEYS.SALES_HISTORY, JSON.stringify(hist.slice(-300)));
 
     const updatedInv = applyPendingQueueToInventory(getCachedInventory(), [receiptRecord]);
     localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(updatedInv));
@@ -1606,214 +1925,13 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
       btn.textContent = "📊 Generate 7-Day Weekly Report Now";
     }
   }
-  let activeMpesaCheckoutId = null;
-  let mpesaPollTimer = null;
-  let pendingCartSnapshot = null;
 
-  function toggleMpesaPhoneBox() {
-    const mode = document.getElementById("salePaymentMode").value;
-    const box = document.getElementById("mpesaCustomerPhoneBox");
-    const btn = document.getElementById("checkoutActionBtn");
-    if (mode === "MPESA_STK") {
-      box.classList.remove("hidden");
-      btn.textContent = "📲 Prompt Customer PIN & Complete Sale";
-    } else {
-      box.classList.add("hidden");
-      btn.textContent = "💵 Complete Cash Sale & Print Receipt";
-    }
-  }
-
-  async function handleCheckoutSubmit() {
-    if (!cart || cart.length === 0) return alert("Add at least one item to the cart first.");
-    const mode = document.getElementById("salePaymentMode").value;
-    const totalAmount = cart.reduce((sum, item) => sum + item.qty * item.sellPrice, 0);
-    const receiptId = "RCP-" + Date.now().toString().slice(-6);
-
-    pendingCartSnapshot = {
-      receiptId,
-      items: JSON.parse(JSON.stringify(cart)),
-      totalAmount,
-      dateStr: new Date().toISOString().slice(0, 10),
-      timeStr: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    };
-
-    if (mode === "CASH") {
-      finalizeSaleAndShowReceipt("CASH", "CASH");
-      return;
-    }
-
-    // M-Pesa STK Push Flow
-    const phone = document.getElementById("customerMpesaPhone").value.trim();
-    if (!phone) return alert("Please enter the customer's M-Pesa phone number.");
-    if (!navigator.onLine) return alert("M-Pesa STK Push requires an active internet connection.");
-
-    const btn = document.getElementById("checkoutActionBtn");
-    btn.disabled = true;
-    btn.textContent = "⏳ Sending M-Pesa Prompt...";
-
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          action: "mpesa_stk_push",
-          shopId: currentSession.shopId,
-          pin: currentSession.pin,
-          payload: { phone, amount: totalAmount, receiptId }
-        })
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        alert("❌ " + data.error);
-        return;
-      }
-
-      activeMpesaCheckoutId = data.stk.checkoutRequestId;
-      document.getElementById("mpesaPromptStatusText").textContent =
-        `Prompt sent to ${data.stk.phone} for KES ${totalAmount.toFixed(2)}. Waiting for customer PIN...`;
-      document.getElementById("mpesaWaitingState").classList.remove("hidden");
-      document.getElementById("receiptConfirmedState").classList.add("hidden");
-      document.getElementById("paymentReceiptModal").classList.remove("hidden");
-
-      startMpesaPolling();
-    } catch (e) {
-      alert("❌ Network error initiating M-Pesa prompt.");
-    } finally {
-      btn.disabled = false;
-      toggleMpesaPhoneBox();
-    }
-  }
-
-  function startMpesaPolling() {
-    clearInterval(mpesaPollTimer);
-    let attempts = 0;
-    mpesaPollTimer = setInterval(async () => {
-      attempts++;
-      if (attempts > 18) { // Stop after ~72 seconds
-        clearInterval(mpesaPollTimer);
-        document.getElementById("mpesaPromptStatusText").textContent =
-          "⏱️ Timed out waiting for PIN. Tap 'Check Payment Now' if the customer just paid.";
-        return;
-      }
-      await checkMpesaNowManual(true);
-    }, 4000);
-  }
-
-  async function checkMpesaNowManual(isSilent) {
-    if (!activeMpesaCheckoutId) return;
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          action: "mpesa_query_status",
-          shopId: currentSession.shopId,
-          pin: currentSession.pin,
-          payload: { checkoutRequestId: activeMpesaCheckoutId }
-        })
-      });
-      const data = await res.json();
-      if (!data.ok) return;
-
-      if (data.payment.status === "PAID") {
-        clearInterval(mpesaPollTimer);
-        const refCode = activeMpesaCheckoutId.slice(-10).toUpperCase();
-        finalizeSaleAndShowReceipt("MPESA", refCode);
-      } else if (data.payment.status === "FAILED") {
-        clearInterval(mpesaPollTimer);
-        document.getElementById("mpesaPromptStatusText").textContent = "❌ " + data.payment.message;
-      } else if (!isSilent) {
-        document.getElementById("mpesaPromptStatusText").textContent = "⏳ " + data.payment.message;
-      }
-    } catch (e) {
-      if (!isSilent) alert("Could not reach server to check M-Pesa status.");
-    }
-  }
-
-  function cancelMpesaWait() {
-    clearInterval(mpesaPollTimer);
-    activeMpesaCheckoutId = null;
-    document.getElementById("paymentReceiptModal").classList.add("hidden");
-  }
-
-  function finalizeSaleAndShowReceipt(paymentMethod, paymentRef) {
-    const snap = pendingCartSnapshot;
-    if (!snap) return;
-
-    // 1. Deduct inventory locally & queue sale lines for Google Sheet sync
-    snap.items.forEach(item => {
-      const invItem = localInventory.find(p => p.sku === item.sku);
-      if (invItem) {
-        invItem.stock = Math.max(0, Number((invItem.stock - item.qty).toFixed(2)));
-      }
-      const revenue = item.qty * item.sellPrice;
-      const profit = item.qty * (item.sellPrice - (item.buyPrice || 0));
-
-      pendingSalesQueue.push({
-        receiptId: snap.receiptId,
-        date: snap.dateStr,
-        time: snap.timeStr,
-        sku: item.sku,
-        productName: item.name,
-        qty: item.qty,
-        unitPrice: item.sellPrice,
-        revenue,
-        profit,
-        paymentMethod: paymentRef !== "CASH" ? `MPESA:${paymentRef}` : "CASH"
-      });
-    });
-
-    saveLocalState();
-    cart = [];
-    renderCart();
-    renderInventoryTable();
-    renderSalesHistory();
-    renderShopProgressCharts();
-
-    // 2. Trigger immediate background sync so Google Sheets & analytics update right away
-    if (navigator.onLine) {
-      syncOfflineQueue();
-    }
-
-    // 3. Render printable thermal receipt
-    const itemsHtml = snap.items.map(i =>
-      `<div class="receipt-line"><span>${i.name} x${i.qty}</span><span>${(i.qty * i.sellPrice).toFixed(2)}</span></div>`
-    ).join("");
-
-    document.getElementById("receiptPrintArea").innerHTML = `
-      <div style="text-align:center; font-weight:bold; font-size:15px;">${currentSession.shopName}</div>
-      <div style="text-align:center; font-size:11px; margin-bottom:8px;">Shop ID: ${currentSession.shopId}</div>
-      <div class="receipt-line"><span>Receipt:</span><span>${snap.receiptId}</span></div>
-      <div class="receipt-line"><span>Date:</span><span>${snap.dateStr} ${snap.timeStr}</span></div>
-      <div class="receipt-line"><span>Payment:</span><span>${paymentMethod} (${paymentRef})</span></div>
-      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
-      ${itemsHtml}
-      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
-      <div class="receipt-line" style="font-weight:bold; font-size:15px;">
-        <span>TOTAL PAID:</span><span>KES ${snap.totalAmount.toFixed(2)}</span>
-      </div>
-      <div style="text-align:center; font-size:11px; margin-top:10px;">Thank you for shopping with us!</div>
-    `;
-
-    document.getElementById("mpesaWaitingState").classList.add("hidden");
-    document.getElementById("receiptConfirmedState").classList.remove("hidden");
-    document.getElementById("paymentReceiptModal").classList.remove("hidden");
-    document.getElementById("customerMpesaPhone").value = "";
-  }
-
-  function closeReceiptModal() {
-    document.getElementById("paymentReceiptModal").classList.add("hidden");
-    activeMpesaCheckoutId = null;
-    pendingCartSnapshot = null;
-  }
-
-  /**
-   * ============================================================================
-   * SHOPKEEPER GRAPHED PROGRESS DASHBOARD (OFFLINE-SAFE HTML5 CANVAS CHARTS)
-   * ============================================================================
-   */
+  // =========================================================================
+  // SHOPKEEPER GRAPHED PROGRESS DASHBOARD (OFFLINE-SAFE CANVAS CHARTS)
+  // =========================================================================
   function renderShopProgressCharts() {
-    const allSales = [...(serverSalesHistory || []), ...(pendingSalesQueue || [])];
+    const history = getSalesHistory();
+    const stats = JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}");
     const days = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
@@ -1824,20 +1942,31 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
     let total7dRev = 0;
     let total7dProfit = 0;
 
-    allSales.forEach(s => {
-      const dStr = String(s.date || "").slice(0, 10);
-      const rev = Number(s.revenue) || 0;
-      const prof = Number(s.profit) || 0;
+    history.forEach(rcp => {
+      const dStr = String(rcp.date || "").slice(0, 10);
       const bucket = days.find(x => x.date === dStr);
-      if (bucket) {
-        bucket.rev += rev;
-        bucket.profit += prof;
-        total7dRev += rev;
-        total7dProfit += prof;
-        const pName = s.productName || s.sku || "Item";
-        prodTotals[pName] = (prodTotals[pName] || 0) + rev;
-      }
+      (rcp.items || []).forEach(line => {
+        const rev = (Number(line.qty) || 0) * (Number(line.sellPrice) || 0);
+        const prof = (Number(line.qty) || 0) * ((Number(line.sellPrice) || 0) - (Number(line.buyPrice) || 0));
+        if (bucket) {
+          bucket.rev += rev;
+          bucket.profit += prof;
+          total7dRev += rev;
+          total7dProfit += prof;
+          const pName = line.name || line.itemId || "Item";
+          prodTotals[pName] = (prodTotals[pName] || 0) + rev;
+        }
+      });
     });
+
+    // Ensure today's server-synced stats reflect on today's bar if local history was cleared
+    const todayBucket = days[days.length - 1];
+    if (stats.date === todayBucket.date && (Number(stats.revenue) || 0) > todayBucket.rev) {
+      total7dRev += (Number(stats.revenue) - todayBucket.rev);
+      total7dProfit += ((Number(stats.profit) || 0) - todayBucket.profit);
+      todayBucket.rev = Number(stats.revenue) || 0;
+      todayBucket.profit = Number(stats.profit) || 0;
+    }
 
     const margin = total7dRev > 0 ? ((total7dProfit / total7dRev) * 100).toFixed(1) : "0.0";
     document.getElementById("chart7dRev").textContent = total7dRev.toFixed(2);
@@ -1861,7 +1990,6 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
     const chartH = H - padT - padB;
     const slotW = chartW / days.length;
 
-    // Grid lines
     ctx.strokeStyle = "#e2e8f0";
     ctx.fillStyle = "#64748b";
     ctx.font = "11px sans-serif";
@@ -1875,7 +2003,6 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
       ctx.fillText(val.toString(), 6, y + 4);
     }
 
-    // Bars (Revenue = Blue, Profit = Green)
     days.forEach((d, idx) => {
       const xCenter = padL + slotW * idx + slotW / 2;
       const revH = (d.rev / maxVal) * chartH;
@@ -1927,246 +2054,6 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
       ctx.fillText("KES " + rev.toFixed(0), 156 + Math.max(4, barW), y + 15);
     });
   }
-  let activeMpesaCheckoutId = null;
-  let mpesaPollTimer = null;
-  let lastReceiptSnapshot = null;
-
-  function toggleMpesaPhoneBox() {
-    const mode = document.getElementById("paymentMode").value;
-    const phoneBox = document.getElementById("mpesaCustomerPhoneBox");
-    const btn = document.getElementById("checkoutBtn");
-
-    if (mode === "MPESA_STK") {
-      phoneBox.style.display = "block";
-      btn.textContent = "📲 Prompt Customer PIN & Complete Sale";
-    } else {
-      phoneBox.style.display = "none";
-      btn.textContent = "✅ Complete Checkout & Print Receipt";
-    }
-  }
-
-  function captureCartForReceipt(paymentLabel) {
-    if (!cart || cart.length === 0) return null;
-    const total = cart.reduce((sum, item) => sum + (Number(item.qty) * Number(item.sellPrice || item.price || 0)), 0);
-    return {
-      receiptId: "RCP-" + Date.now().toString().slice(-6),
-      dateStr: new Date().toISOString().slice(0, 10),
-      timeStr: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      paymentLabel,
-      total,
-      items: cart.map(i => ({
-        name: i.name || i.productName || "Item",
-        qty: Number(i.qty) || 1,
-        price: Number(i.sellPrice || i.price || 0)
-      }))
-    };
-  }
-
-  function showPrintableReceipt(snap) {
-    if (!snap) return;
-    const shopTitle = (typeof currentShop !== "undefined" && currentShop?.shopName)
-      ? currentShop.shopName
-      : (document.querySelector(".header h2")?.textContent || "SHOP POS RECEIPT");
-
-    const itemsHtml = snap.items.map(i =>
-      `<div class="receipt-line"><span>${i.name} x${i.qty}</span><span>${(i.qty * i.price).toFixed(2)}</span></div>`
-    ).join("");
-
-    document.getElementById("receiptPrintArea").innerHTML = `
-      <div style="text-align:center; font-weight:bold; font-size:15px;">${shopTitle}</div>
-      <div class="receipt-line" style="margin-top:6px;"><span>Receipt:</span><span>${snap.receiptId}</span></div>
-      <div class="receipt-line"><span>Date:</span><span>${snap.dateStr} ${snap.timeStr}</span></div>
-      <div class="receipt-line"><span>Payment:</span><span>${snap.paymentLabel}</span></div>
-      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
-      ${itemsHtml}
-      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
-      <div class="receipt-line" style="font-weight:bold; font-size:15px;">
-        <span>TOTAL PAID:</span><span>KES ${snap.total.toFixed(2)}</span>
-      </div>
-      <div style="text-align:center; font-size:11px; margin-top:10px;">Thank you for your business!</div>
-    `;
-
-    document.getElementById("mpesaWaitingState").classList.add("hidden");
-    document.getElementById("receiptConfirmedState").classList.remove("hidden");
-    document.getElementById("paymentReceiptModal").classList.remove("hidden");
-  }
-
-  async function handleCheckoutSubmit() {
-    if (!cart || cart.length === 0) return;
-    const mode = document.getElementById("paymentMode").value;
-
-    // 1. Non-STK modes (Cash / Manual Mobile Money / Card): run existing checkout + show receipt
-    if (mode !== "MPESA_STK") {
-      const snap = captureCartForReceipt(mode);
-      await completeCheckout();
-      showPrintableReceipt(snap);
-      if (typeof renderShopProgressCharts === "function") renderShopProgressCharts();
-      return;
-    }
-
-    // 2. M-Pesa Express STK Push Mode
-    const phone = document.getElementById("customerMpesaPhone").value.trim();
-    if (!phone) return alert("Please enter the customer's M-Pesa mobile number (e.g., 0712345678).");
-    if (!navigator.onLine) return alert("M-Pesa STK Push requires an active internet connection.");
-
-    const totalAmount = cart.reduce((sum, item) => sum + (Number(item.qty) * Number(item.sellPrice || item.price || 0)), 0);
-    const tempReceiptId = "RCP-" + Date.now().toString().slice(-6);
-
-    const btn = document.getElementById("checkoutBtn");
-    btn.disabled = true;
-    btn.textContent = "⏳ Sending M-Pesa Prompt...";
-
-    try {
-      // Uses your active session credentials (supports currentSession or sessionState)
-      const activeShopId = (typeof currentSession !== "undefined" && currentSession?.shopId) || localStorage.getItem("pos_shop_id") || "";
-      const activePin = (typeof currentSession !== "undefined" && currentSession?.pin) || localStorage.getItem("pos_shop_pin") || "";
-
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          action: "mpesa_stk_push",
-          shopId: activeShopId,
-          pin: activePin,
-          payload: { phone, amount: totalAmount, receiptId: tempReceiptId }
-        })
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        alert("❌ " + data.error);
-        btn.disabled = false;
-        toggleMpesaPhoneBox();
-        return;
-      }
-
-      activeMpesaCheckoutId = data.stk.checkoutRequestId;
-      document.getElementById("mpesaPromptStatusText").textContent =
-        `Prompt sent to ${data.stk.phone} for KES ${totalAmount.toFixed(2)}. Ask the customer to enter their M-Pesa PIN...`;
-      document.getElementById("mpesaWaitingState").classList.remove("hidden");
-      document.getElementById("receiptConfirmedState").classList.add("hidden");
-      document.getElementById("paymentReceiptModal").classList.remove("hidden");
-
-      startMpesaPolling();
-    } catch (e) {
-      alert("❌ Network error sending M-Pesa prompt.");
-      btn.disabled = false;
-      toggleMpesaPhoneBox();
-    }
-  }
-
-  function startMpesaPolling() {
-    clearInterval(mpesaPollTimer);
-    let attempts = 0;
-    mpesaPollTimer = setInterval(async () => {
-      attempts++;
-      if (attempts > 18) {
-        clearInterval(mpesaPollTimer);
-        document.getElementById("mpesaPromptStatusText").textContent =
-          "⏱️ Timed out waiting for PIN. Tap 'Check Payment Now' if the customer just confirmed.";
-        return;
-      }
-      await checkMpesaNowManual(true);
-    }, 4000);
-  }
-
-  async function checkMpesaNowManual(isSilent) {
-    if (!activeMpesaCheckoutId) return;
-    const activeShopId = (typeof currentSession !== "undefined" && currentSession?.shopId) || localStorage.getItem("pos_shop_id") || "";
-    const activePin = (typeof currentSession !== "undefined" && currentSession?.pin) || localStorage.getItem("pos_shop_pin") || "";
-
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          action: "mpesa_query_status",
-          shopId: activeShopId,
-          pin: activePin,
-          payload: { checkoutRequestId: activeMpesaCheckoutId }
-        })
-      });
-      const data = await res.json();
-      if (!data.ok) return;
-
-      if (data.payment.status === "PAID") {
-        clearInterval(mpesaPollTimer);
-        const refCode = activeMpesaCheckoutId.slice(-8).toUpperCase();
-        const paymentLabel = `M-Pesa (${refCode})`;
-
-        // Snapshot receipt before completeCheckout() clears the cart
-        const snap = captureCartForReceipt(paymentLabel);
-
-        // Temporarily set paymentMode value to record the M-Pesa ref in Sales_Log
-        const modeSelect = document.getElementById("paymentMode");
-        const opt = document.createElement("option");
-        opt.value = paymentLabel;
-        opt.text = paymentLabel;
-        modeSelect.add(opt);
-        modeSelect.value = paymentLabel;
-
-        await completeCheckout();
-
-        // Reset payment selector back to M-Pesa Express for the next customer
-        modeSelect.remove(modeSelect.options.length - 1);
-        modeSelect.value = "MPESA_STK";
-        document.getElementById("customerMpesaPhone").value = "";
-        toggleMpesaPhoneBox();
-
-        showPrintableReceipt(snap);
-        if (typeof renderShopProgressCharts === "function") renderShopProgressCharts();
-      } else if (data.payment.status === "FAILED") {
-        clearInterval(mpesaPollTimer);
-        document.getElementById("mpesaPromptStatusText").textContent = "❌ " + data.payment.message;
-        document.getElementById("checkoutBtn").disabled = false;
-        toggleMpesaPhoneBox();
-      } else if (!isSilent) {
-        document.getElementById("mpesaPromptStatusText").textContent = "⏳ " + data.payment.message;
-      }
-    } catch (e) {
-      if (!isSilent) alert("Could not check M-Pesa status right now.");
-    }
-  }
-
-  function cancelMpesaWait() {
-    clearInterval(mpesaPollTimer);
-    activeMpesaCheckoutId = null;
-    document.getElementById("paymentReceiptModal").classList.add("hidden");
-    document.getElementById("checkoutBtn").disabled = (cart.length === 0);
-    toggleMpesaPhoneBox();
-  }
-
-  function closeReceiptModal() {
-    document.getElementById("paymentReceiptModal").classList.add("hidden");
-    activeMpesaCheckoutId = null;
-  }
 </script>
-  <!-- ==================== M-PESA STATUS & PRINTABLE RECEIPT MODAL ==================== -->
-<div id="paymentReceiptModal" class="modal-backdrop hidden">
-  <div class="modal-card">
-    <!-- State A: Waiting for Customer M-Pesa PIN -->
-    <div id="mpesaWaitingState">
-      <h3 style="margin-bottom:8px;">📲 Waiting for Customer PIN...</h3>
-      <p id="mpesaPromptStatusText" style="font-size:13px; color:#475569; margin-bottom:14px;">
-        An M-Pesa prompt has been sent to the customer's phone. Ask them to enter their M-Pesa PIN.
-      </p>
-      <div style="display:flex; gap:8px;">
-        <button type="button" class="btn btn-dark" onclick="checkMpesaNowManual()">🔄 Check Payment Now</button>
-        <button type="button" class="btn-sm btn-sm-red" style="padding:10px 14px;" onclick="cancelMpesaWait()">Cancel</button>
-      </div>
-    </div>
-
-    <!-- State B: Confirmed & Printable Receipt -->
-    <div id="receiptConfirmedState" class="hidden">
-      <div style="text-align:center; color:#059669; font-weight:700; margin-bottom:10px;">
-        ✅ Payment Confirmed & Stock Updated!
-      </div>
-      <div id="receiptPrintArea" class="receipt-paper"></div>
-      <div class="grid-2" style="margin-top:14px;">
-        <button type="button" class="btn btn-dark" onclick="window.print()">🖨️ Print Receipt</button>
-        <button type="button" class="btn btn-green" onclick="closeReceiptModal()">Done / Next Sale</button>
-      </div>
-    </div>
-  </div>
-</div>
 </body>
 </html>
