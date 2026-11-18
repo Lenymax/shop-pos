@@ -81,6 +81,19 @@
     .helper-hint { font-size: 11px; color: #64748b; margin-top: 4px; }
     .hidden { display: none !important; }
     @media(max-width:650px){ .grid-2, .grid-3, .grid-qty-amount, .stat-cards { grid-template-columns: 1fr; } }
+    /* Payment Modal & Thermal Receipt Print Styles */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,0.72); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }
+    .modal-card { background: #fff; border-radius: 12px; max-width: 420px; width: 100%; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.25); }
+    .receipt-paper { background: #fff; border: 1px dashed #94a3b8; padding: 16px; font-family: 'Courier New', monospace; font-size: 13px; color: #0f172a; line-height: 1.45; }
+    .receipt-line { display: flex; justify-content: space-between; }
+    .chart-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+    canvas.pos-chart { width: 100%; height: 220px; display: block; }
+
+    @media print {
+      body * { visibility: hidden !important; }
+      #receiptPrintArea, #receiptPrintArea * { visibility: visible !important; }
+      #receiptPrintArea { position: fixed; left: 0; top: 0; width: 80mm; border: none; padding: 4mm; }
+    }
   </style>
 </head>
 <body>
@@ -342,10 +355,11 @@
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="showTab(event, 'pos')">🛒 Record Sale</button>
-    <button class="tab" onclick="showTab(event, 'inventory')">📦 Inventory</button>
-    <button class="tab" onclick="showTab(event, 'analytics')">📈 Reports</button>
-  </div>
+      <button class="tab active" onclick="switchPosTab('tabSale', this)">🛒 Record Sale</button>
+      <button class="tab" onclick="switchPosTab('tabInventory', this)">📦 Inventory</button>
+      <button class="tab" onclick="switchPosTab('tabAnalytics', this)">📈 Progress & Charts</button>
+      <button class="tab" onclick="switchPosTab('tabHistory', this)">🧾 Sales Log</button>
+    </div>
 
   <!-- TAB 1: POINT OF SALE -->
   <div id="pos" class="panel active">
@@ -405,11 +419,16 @@
     <div class="grid-2">
       <div>
         <label>Payment Mode</label>
-        <select id="paymentMode">
-          <option value="Cash">Cash</option>
-          <option value="Mobile Money">Mobile Money (M-Pesa / Airtel)</option>
-          <option value="Card">Card</option>
+        <select id="paymentMode" onchange="toggleMpesaPhoneBox()">
+          <option value="Cash">💵 Cash (Instant Receipt)</option>
+          <option value="MPESA_STK">📲 M-Pesa Express (Prompt Customer PIN)</option>
+          <option value="Mobile Money">📱 Manual M-Pesa / Till</option>
+          <option value="Card">💳 Card</option>
         </select>
+        <div id="mpesaCustomerPhoneBox" style="display:none; margin-top:8px;">
+          <label>Customer M-Pesa Number *</label>
+          <input type="tel" id="customerMpesaPhone" placeholder="e.g. 0712345678">
+        </div>
       </div>
       <div class="summary-box">
         <small>Grand Total</small>
@@ -417,8 +436,8 @@
       </div>
     </div>
 
-    <button type="button" id="checkoutBtn" class="btn btn-green" onclick="completeCheckout()" disabled>
-      ✅ Complete Checkout
+    <button type="button" id="checkoutBtn" class="btn btn-green" onclick="handleCheckoutSubmit()" disabled>
+      ✅ Complete Checkout & Print Receipt
     </button>
   </div>
 
@@ -477,8 +496,36 @@
       </table>
     </div>
   </div>
+  
+<!-- TAB 3: SHOP PROGRESS & GRAPHED ANALYTICS -->
+  <div id="tabAnalytics" class="panel">
+    <div class="stat-cards">
+      <div class="card">
+        <h4>7-Day Revenue</h4>
+        <p id="chart7dRev" style="color:#2563eb;">0.00</p>
+      </div>
+      <div class="card">
+        <h4>7-Day Net Profit</h4>
+        <p id="chart7dProfit" style="color:#059669;">0.00</p>
+      </div>
+      <div class="card">
+        <h4>Profit Margin</h4>
+        <p id="chartMarginPct" style="color:#0f172a;">0%</p>
+      </div>
+    </div>
 
-  <!-- TAB 3: REPORTS & ANALYTICS -->
+    <div class="chart-box">
+      <h4 style="margin-bottom:8px;">📊 7-Day Sales vs. Net Profit Trend</h4>
+      <canvas id="salesTrendCanvas" class="pos-chart" width="640" height="220"></canvas>
+    </div>
+
+    <div class="chart-box">
+      <h4 style="margin-bottom:8px;">🏆 Top 5 Best-Selling Products (7 Days)</h4>
+      <canvas id="topProductsCanvas" class="pos-chart" width="640" height="220"></canvas>
+    </div>
+  </div>
+  
+  <!-- TAB 4: REPORTS & ANALYTICS -->
   <div id="analytics" class="panel">
     <h4 style="margin-bottom:12px;">Today's Sales Breakdown (<span id="todayDateLabel">--</span>)</h4>
     <div class="stat-cards">
@@ -1559,6 +1606,567 @@ async function populateAdvisoryShopDropdown(preselectShopId) {
       btn.textContent = "📊 Generate 7-Day Weekly Report Now";
     }
   }
+  let activeMpesaCheckoutId = null;
+  let mpesaPollTimer = null;
+  let pendingCartSnapshot = null;
+
+  function toggleMpesaPhoneBox() {
+    const mode = document.getElementById("salePaymentMode").value;
+    const box = document.getElementById("mpesaCustomerPhoneBox");
+    const btn = document.getElementById("checkoutActionBtn");
+    if (mode === "MPESA_STK") {
+      box.classList.remove("hidden");
+      btn.textContent = "📲 Prompt Customer PIN & Complete Sale";
+    } else {
+      box.classList.add("hidden");
+      btn.textContent = "💵 Complete Cash Sale & Print Receipt";
+    }
+  }
+
+  async function handleCheckoutSubmit() {
+    if (!cart || cart.length === 0) return alert("Add at least one item to the cart first.");
+    const mode = document.getElementById("salePaymentMode").value;
+    const totalAmount = cart.reduce((sum, item) => sum + item.qty * item.sellPrice, 0);
+    const receiptId = "RCP-" + Date.now().toString().slice(-6);
+
+    pendingCartSnapshot = {
+      receiptId,
+      items: JSON.parse(JSON.stringify(cart)),
+      totalAmount,
+      dateStr: new Date().toISOString().slice(0, 10),
+      timeStr: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    };
+
+    if (mode === "CASH") {
+      finalizeSaleAndShowReceipt("CASH", "CASH");
+      return;
+    }
+
+    // M-Pesa STK Push Flow
+    const phone = document.getElementById("customerMpesaPhone").value.trim();
+    if (!phone) return alert("Please enter the customer's M-Pesa phone number.");
+    if (!navigator.onLine) return alert("M-Pesa STK Push requires an active internet connection.");
+
+    const btn = document.getElementById("checkoutActionBtn");
+    btn.disabled = true;
+    btn.textContent = "⏳ Sending M-Pesa Prompt...";
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "mpesa_stk_push",
+          shopId: currentSession.shopId,
+          pin: currentSession.pin,
+          payload: { phone, amount: totalAmount, receiptId }
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        alert("❌ " + data.error);
+        return;
+      }
+
+      activeMpesaCheckoutId = data.stk.checkoutRequestId;
+      document.getElementById("mpesaPromptStatusText").textContent =
+        `Prompt sent to ${data.stk.phone} for KES ${totalAmount.toFixed(2)}. Waiting for customer PIN...`;
+      document.getElementById("mpesaWaitingState").classList.remove("hidden");
+      document.getElementById("receiptConfirmedState").classList.add("hidden");
+      document.getElementById("paymentReceiptModal").classList.remove("hidden");
+
+      startMpesaPolling();
+    } catch (e) {
+      alert("❌ Network error initiating M-Pesa prompt.");
+    } finally {
+      btn.disabled = false;
+      toggleMpesaPhoneBox();
+    }
+  }
+
+  function startMpesaPolling() {
+    clearInterval(mpesaPollTimer);
+    let attempts = 0;
+    mpesaPollTimer = setInterval(async () => {
+      attempts++;
+      if (attempts > 18) { // Stop after ~72 seconds
+        clearInterval(mpesaPollTimer);
+        document.getElementById("mpesaPromptStatusText").textContent =
+          "⏱️ Timed out waiting for PIN. Tap 'Check Payment Now' if the customer just paid.";
+        return;
+      }
+      await checkMpesaNowManual(true);
+    }, 4000);
+  }
+
+  async function checkMpesaNowManual(isSilent) {
+    if (!activeMpesaCheckoutId) return;
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "mpesa_query_status",
+          shopId: currentSession.shopId,
+          pin: currentSession.pin,
+          payload: { checkoutRequestId: activeMpesaCheckoutId }
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) return;
+
+      if (data.payment.status === "PAID") {
+        clearInterval(mpesaPollTimer);
+        const refCode = activeMpesaCheckoutId.slice(-10).toUpperCase();
+        finalizeSaleAndShowReceipt("MPESA", refCode);
+      } else if (data.payment.status === "FAILED") {
+        clearInterval(mpesaPollTimer);
+        document.getElementById("mpesaPromptStatusText").textContent = "❌ " + data.payment.message;
+      } else if (!isSilent) {
+        document.getElementById("mpesaPromptStatusText").textContent = "⏳ " + data.payment.message;
+      }
+    } catch (e) {
+      if (!isSilent) alert("Could not reach server to check M-Pesa status.");
+    }
+  }
+
+  function cancelMpesaWait() {
+    clearInterval(mpesaPollTimer);
+    activeMpesaCheckoutId = null;
+    document.getElementById("paymentReceiptModal").classList.add("hidden");
+  }
+
+  function finalizeSaleAndShowReceipt(paymentMethod, paymentRef) {
+    const snap = pendingCartSnapshot;
+    if (!snap) return;
+
+    // 1. Deduct inventory locally & queue sale lines for Google Sheet sync
+    snap.items.forEach(item => {
+      const invItem = localInventory.find(p => p.sku === item.sku);
+      if (invItem) {
+        invItem.stock = Math.max(0, Number((invItem.stock - item.qty).toFixed(2)));
+      }
+      const revenue = item.qty * item.sellPrice;
+      const profit = item.qty * (item.sellPrice - (item.buyPrice || 0));
+
+      pendingSalesQueue.push({
+        receiptId: snap.receiptId,
+        date: snap.dateStr,
+        time: snap.timeStr,
+        sku: item.sku,
+        productName: item.name,
+        qty: item.qty,
+        unitPrice: item.sellPrice,
+        revenue,
+        profit,
+        paymentMethod: paymentRef !== "CASH" ? `MPESA:${paymentRef}` : "CASH"
+      });
+    });
+
+    saveLocalState();
+    cart = [];
+    renderCart();
+    renderInventoryTable();
+    renderSalesHistory();
+    renderShopProgressCharts();
+
+    // 2. Trigger immediate background sync so Google Sheets & analytics update right away
+    if (navigator.onLine) {
+      syncOfflineQueue();
+    }
+
+    // 3. Render printable thermal receipt
+    const itemsHtml = snap.items.map(i =>
+      `<div class="receipt-line"><span>${i.name} x${i.qty}</span><span>${(i.qty * i.sellPrice).toFixed(2)}</span></div>`
+    ).join("");
+
+    document.getElementById("receiptPrintArea").innerHTML = `
+      <div style="text-align:center; font-weight:bold; font-size:15px;">${currentSession.shopName}</div>
+      <div style="text-align:center; font-size:11px; margin-bottom:8px;">Shop ID: ${currentSession.shopId}</div>
+      <div class="receipt-line"><span>Receipt:</span><span>${snap.receiptId}</span></div>
+      <div class="receipt-line"><span>Date:</span><span>${snap.dateStr} ${snap.timeStr}</span></div>
+      <div class="receipt-line"><span>Payment:</span><span>${paymentMethod} (${paymentRef})</span></div>
+      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
+      ${itemsHtml}
+      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
+      <div class="receipt-line" style="font-weight:bold; font-size:15px;">
+        <span>TOTAL PAID:</span><span>KES ${snap.totalAmount.toFixed(2)}</span>
+      </div>
+      <div style="text-align:center; font-size:11px; margin-top:10px;">Thank you for shopping with us!</div>
+    `;
+
+    document.getElementById("mpesaWaitingState").classList.add("hidden");
+    document.getElementById("receiptConfirmedState").classList.remove("hidden");
+    document.getElementById("paymentReceiptModal").classList.remove("hidden");
+    document.getElementById("customerMpesaPhone").value = "";
+  }
+
+  function closeReceiptModal() {
+    document.getElementById("paymentReceiptModal").classList.add("hidden");
+    activeMpesaCheckoutId = null;
+    pendingCartSnapshot = null;
+  }
+
+  /**
+   * ============================================================================
+   * SHOPKEEPER GRAPHED PROGRESS DASHBOARD (OFFLINE-SAFE HTML5 CANVAS CHARTS)
+   * ============================================================================
+   */
+  function renderShopProgressCharts() {
+    const allSales = [...(serverSalesHistory || []), ...(pendingSalesQueue || [])];
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+      days.push({ date: d, label: d.slice(5), rev: 0, profit: 0 });
+    }
+
+    const prodTotals = {};
+    let total7dRev = 0;
+    let total7dProfit = 0;
+
+    allSales.forEach(s => {
+      const dStr = String(s.date || "").slice(0, 10);
+      const rev = Number(s.revenue) || 0;
+      const prof = Number(s.profit) || 0;
+      const bucket = days.find(x => x.date === dStr);
+      if (bucket) {
+        bucket.rev += rev;
+        bucket.profit += prof;
+        total7dRev += rev;
+        total7dProfit += prof;
+        const pName = s.productName || s.sku || "Item";
+        prodTotals[pName] = (prodTotals[pName] || 0) + rev;
+      }
+    });
+
+    const margin = total7dRev > 0 ? ((total7dProfit / total7dRev) * 100).toFixed(1) : "0.0";
+    document.getElementById("chart7dRev").textContent = total7dRev.toFixed(2);
+    document.getElementById("chart7dProfit").textContent = total7dProfit.toFixed(2);
+    document.getElementById("chartMarginPct").textContent = margin + "%";
+
+    drawSalesTrendCanvas(days);
+    drawTopProductsCanvas(prodTotals);
+  }
+
+  function drawSalesTrendCanvas(days) {
+    const canvas = document.getElementById("salesTrendCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const maxVal = Math.max(100, ...days.map(d => d.rev));
+    const padL = 52, padR = 16, padT = 20, padB = 34;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+    const slotW = chartW / days.length;
+
+    // Grid lines
+    ctx.strokeStyle = "#e2e8f0";
+    ctx.fillStyle = "#64748b";
+    ctx.font = "11px sans-serif";
+    for (let g = 0; g <= 4; g++) {
+      const y = padT + (chartH * g) / 4;
+      const val = Math.round(maxVal * (1 - g / 4));
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(W - padR, y);
+      ctx.stroke();
+      ctx.fillText(val.toString(), 6, y + 4);
+    }
+
+    // Bars (Revenue = Blue, Profit = Green)
+    days.forEach((d, idx) => {
+      const xCenter = padL + slotW * idx + slotW / 2;
+      const revH = (d.rev / maxVal) * chartH;
+      const profH = (Math.max(0, d.profit) / maxVal) * chartH;
+
+      ctx.fillStyle = "#2563eb";
+      ctx.fillRect(xCenter - 16, padT + chartH - revH, 14, revH);
+
+      ctx.fillStyle = "#059669";
+      ctx.fillRect(xCenter + 2, padT + chartH - profH, 14, profH);
+
+      ctx.fillStyle = "#334155";
+      ctx.textAlign = "center";
+      ctx.fillText(d.label, xCenter, H - 12);
+    });
+    ctx.textAlign = "left";
+  }
+
+  function drawTopProductsCanvas(prodTotals) {
+    const canvas = document.getElementById("topProductsCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const sorted = Object.entries(prodTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    if (!sorted.length) {
+      ctx.fillStyle = "#64748b";
+      ctx.font = "13px sans-serif";
+      ctx.fillText("Record sales to visualize top-selling products.", 20, H / 2);
+      return;
+    }
+
+    const maxRev = Math.max(1, sorted[0][1]);
+    const rowH = 36;
+    sorted.forEach(([name, rev], idx) => {
+      const y = 18 + idx * rowH;
+      const barW = ((W - 220) * rev) / maxRev;
+
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 12px sans-serif";
+      ctx.fillText(name.slice(0, 20), 10, y + 15);
+
+      ctx.fillStyle = "#0ea5e9";
+      ctx.fillRect(150, y, Math.max(4, barW), 20);
+
+      ctx.fillStyle = "#334155";
+      ctx.font = "12px sans-serif";
+      ctx.fillText("KES " + rev.toFixed(0), 156 + Math.max(4, barW), y + 15);
+    });
+  }
+  let activeMpesaCheckoutId = null;
+  let mpesaPollTimer = null;
+  let lastReceiptSnapshot = null;
+
+  function toggleMpesaPhoneBox() {
+    const mode = document.getElementById("paymentMode").value;
+    const phoneBox = document.getElementById("mpesaCustomerPhoneBox");
+    const btn = document.getElementById("checkoutBtn");
+
+    if (mode === "MPESA_STK") {
+      phoneBox.style.display = "block";
+      btn.textContent = "📲 Prompt Customer PIN & Complete Sale";
+    } else {
+      phoneBox.style.display = "none";
+      btn.textContent = "✅ Complete Checkout & Print Receipt";
+    }
+  }
+
+  function captureCartForReceipt(paymentLabel) {
+    if (!cart || cart.length === 0) return null;
+    const total = cart.reduce((sum, item) => sum + (Number(item.qty) * Number(item.sellPrice || item.price || 0)), 0);
+    return {
+      receiptId: "RCP-" + Date.now().toString().slice(-6),
+      dateStr: new Date().toISOString().slice(0, 10),
+      timeStr: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      paymentLabel,
+      total,
+      items: cart.map(i => ({
+        name: i.name || i.productName || "Item",
+        qty: Number(i.qty) || 1,
+        price: Number(i.sellPrice || i.price || 0)
+      }))
+    };
+  }
+
+  function showPrintableReceipt(snap) {
+    if (!snap) return;
+    const shopTitle = (typeof currentShop !== "undefined" && currentShop?.shopName)
+      ? currentShop.shopName
+      : (document.querySelector(".header h2")?.textContent || "SHOP POS RECEIPT");
+
+    const itemsHtml = snap.items.map(i =>
+      `<div class="receipt-line"><span>${i.name} x${i.qty}</span><span>${(i.qty * i.price).toFixed(2)}</span></div>`
+    ).join("");
+
+    document.getElementById("receiptPrintArea").innerHTML = `
+      <div style="text-align:center; font-weight:bold; font-size:15px;">${shopTitle}</div>
+      <div class="receipt-line" style="margin-top:6px;"><span>Receipt:</span><span>${snap.receiptId}</span></div>
+      <div class="receipt-line"><span>Date:</span><span>${snap.dateStr} ${snap.timeStr}</span></div>
+      <div class="receipt-line"><span>Payment:</span><span>${snap.paymentLabel}</span></div>
+      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
+      ${itemsHtml}
+      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
+      <div class="receipt-line" style="font-weight:bold; font-size:15px;">
+        <span>TOTAL PAID:</span><span>KES ${snap.total.toFixed(2)}</span>
+      </div>
+      <div style="text-align:center; font-size:11px; margin-top:10px;">Thank you for your business!</div>
+    `;
+
+    document.getElementById("mpesaWaitingState").classList.add("hidden");
+    document.getElementById("receiptConfirmedState").classList.remove("hidden");
+    document.getElementById("paymentReceiptModal").classList.remove("hidden");
+  }
+
+  async function handleCheckoutSubmit() {
+    if (!cart || cart.length === 0) return;
+    const mode = document.getElementById("paymentMode").value;
+
+    // 1. Non-STK modes (Cash / Manual Mobile Money / Card): run existing checkout + show receipt
+    if (mode !== "MPESA_STK") {
+      const snap = captureCartForReceipt(mode);
+      await completeCheckout();
+      showPrintableReceipt(snap);
+      if (typeof renderShopProgressCharts === "function") renderShopProgressCharts();
+      return;
+    }
+
+    // 2. M-Pesa Express STK Push Mode
+    const phone = document.getElementById("customerMpesaPhone").value.trim();
+    if (!phone) return alert("Please enter the customer's M-Pesa mobile number (e.g., 0712345678).");
+    if (!navigator.onLine) return alert("M-Pesa STK Push requires an active internet connection.");
+
+    const totalAmount = cart.reduce((sum, item) => sum + (Number(item.qty) * Number(item.sellPrice || item.price || 0)), 0);
+    const tempReceiptId = "RCP-" + Date.now().toString().slice(-6);
+
+    const btn = document.getElementById("checkoutBtn");
+    btn.disabled = true;
+    btn.textContent = "⏳ Sending M-Pesa Prompt...";
+
+    try {
+      // Uses your active session credentials (supports currentSession or sessionState)
+      const activeShopId = (typeof currentSession !== "undefined" && currentSession?.shopId) || localStorage.getItem("pos_shop_id") || "";
+      const activePin = (typeof currentSession !== "undefined" && currentSession?.pin) || localStorage.getItem("pos_shop_pin") || "";
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "mpesa_stk_push",
+          shopId: activeShopId,
+          pin: activePin,
+          payload: { phone, amount: totalAmount, receiptId: tempReceiptId }
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        alert("❌ " + data.error);
+        btn.disabled = false;
+        toggleMpesaPhoneBox();
+        return;
+      }
+
+      activeMpesaCheckoutId = data.stk.checkoutRequestId;
+      document.getElementById("mpesaPromptStatusText").textContent =
+        `Prompt sent to ${data.stk.phone} for KES ${totalAmount.toFixed(2)}. Ask the customer to enter their M-Pesa PIN...`;
+      document.getElementById("mpesaWaitingState").classList.remove("hidden");
+      document.getElementById("receiptConfirmedState").classList.add("hidden");
+      document.getElementById("paymentReceiptModal").classList.remove("hidden");
+
+      startMpesaPolling();
+    } catch (e) {
+      alert("❌ Network error sending M-Pesa prompt.");
+      btn.disabled = false;
+      toggleMpesaPhoneBox();
+    }
+  }
+
+  function startMpesaPolling() {
+    clearInterval(mpesaPollTimer);
+    let attempts = 0;
+    mpesaPollTimer = setInterval(async () => {
+      attempts++;
+      if (attempts > 18) {
+        clearInterval(mpesaPollTimer);
+        document.getElementById("mpesaPromptStatusText").textContent =
+          "⏱️ Timed out waiting for PIN. Tap 'Check Payment Now' if the customer just confirmed.";
+        return;
+      }
+      await checkMpesaNowManual(true);
+    }, 4000);
+  }
+
+  async function checkMpesaNowManual(isSilent) {
+    if (!activeMpesaCheckoutId) return;
+    const activeShopId = (typeof currentSession !== "undefined" && currentSession?.shopId) || localStorage.getItem("pos_shop_id") || "";
+    const activePin = (typeof currentSession !== "undefined" && currentSession?.pin) || localStorage.getItem("pos_shop_pin") || "";
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "mpesa_query_status",
+          shopId: activeShopId,
+          pin: activePin,
+          payload: { checkoutRequestId: activeMpesaCheckoutId }
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) return;
+
+      if (data.payment.status === "PAID") {
+        clearInterval(mpesaPollTimer);
+        const refCode = activeMpesaCheckoutId.slice(-8).toUpperCase();
+        const paymentLabel = `M-Pesa (${refCode})`;
+
+        // Snapshot receipt before completeCheckout() clears the cart
+        const snap = captureCartForReceipt(paymentLabel);
+
+        // Temporarily set paymentMode value to record the M-Pesa ref in Sales_Log
+        const modeSelect = document.getElementById("paymentMode");
+        const opt = document.createElement("option");
+        opt.value = paymentLabel;
+        opt.text = paymentLabel;
+        modeSelect.add(opt);
+        modeSelect.value = paymentLabel;
+
+        await completeCheckout();
+
+        // Reset payment selector back to M-Pesa Express for the next customer
+        modeSelect.remove(modeSelect.options.length - 1);
+        modeSelect.value = "MPESA_STK";
+        document.getElementById("customerMpesaPhone").value = "";
+        toggleMpesaPhoneBox();
+
+        showPrintableReceipt(snap);
+        if (typeof renderShopProgressCharts === "function") renderShopProgressCharts();
+      } else if (data.payment.status === "FAILED") {
+        clearInterval(mpesaPollTimer);
+        document.getElementById("mpesaPromptStatusText").textContent = "❌ " + data.payment.message;
+        document.getElementById("checkoutBtn").disabled = false;
+        toggleMpesaPhoneBox();
+      } else if (!isSilent) {
+        document.getElementById("mpesaPromptStatusText").textContent = "⏳ " + data.payment.message;
+      }
+    } catch (e) {
+      if (!isSilent) alert("Could not check M-Pesa status right now.");
+    }
+  }
+
+  function cancelMpesaWait() {
+    clearInterval(mpesaPollTimer);
+    activeMpesaCheckoutId = null;
+    document.getElementById("paymentReceiptModal").classList.add("hidden");
+    document.getElementById("checkoutBtn").disabled = (cart.length === 0);
+    toggleMpesaPhoneBox();
+  }
+
+  function closeReceiptModal() {
+    document.getElementById("paymentReceiptModal").classList.add("hidden");
+    activeMpesaCheckoutId = null;
+  }
 </script>
+  <!-- ==================== M-PESA STATUS & PRINTABLE RECEIPT MODAL ==================== -->
+<div id="paymentReceiptModal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <!-- State A: Waiting for Customer M-Pesa PIN -->
+    <div id="mpesaWaitingState">
+      <h3 style="margin-bottom:8px;">📲 Waiting for Customer PIN...</h3>
+      <p id="mpesaPromptStatusText" style="font-size:13px; color:#475569; margin-bottom:14px;">
+        An M-Pesa prompt has been sent to the customer's phone. Ask them to enter their M-Pesa PIN.
+      </p>
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn btn-dark" onclick="checkMpesaNowManual()">🔄 Check Payment Now</button>
+        <button type="button" class="btn-sm btn-sm-red" style="padding:10px 14px;" onclick="cancelMpesaWait()">Cancel</button>
+      </div>
+    </div>
+
+    <!-- State B: Confirmed & Printable Receipt -->
+    <div id="receiptConfirmedState" class="hidden">
+      <div style="text-align:center; color:#059669; font-weight:700; margin-bottom:10px;">
+        ✅ Payment Confirmed & Stock Updated!
+      </div>
+      <div id="receiptPrintArea" class="receipt-paper"></div>
+      <div class="grid-2" style="margin-top:14px;">
+        <button type="button" class="btn btn-dark" onclick="window.print()">🖨️ Print Receipt</button>
+        <button type="button" class="btn btn-green" onclick="closeReceiptModal()">Done / Next Sale</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
