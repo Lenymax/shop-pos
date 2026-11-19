@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-title" content="DukaPulse">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>DukaPulse</title>
+  <link rel="manifest" href="./manifest.json">
+  <style>
+    :root {
+      --bg-body: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-subtle: #f8fafc;
+      --bg-tabs: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+      --border-light: #e2e8f0;
+      --header-bg: #0f172a;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-soft: #dbeafe;
+      --accent-soft-text: #1e40af;
+      --success: #059669;
+      --success-hover: #047857;
+    }
+
+    body.dark-mode {
+      --bg-body: #090d16;
+      --bg-card: #111827;
+      --bg-subtle: #1f2937;
+      --bg-tabs: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --border-light: #1e293b;
+      --header-bg: #030712;
+      --accent-soft: rgba(59, 130, 246, 0.2);
+      --accent-soft-text: #93c5fd;
+    }
+
+    /* Thematic Accent Palettes */
+    body[data-theme="emerald"] { --accent: #059669; --accent-hover: #047857; --accent-soft: #d1fae5; --accent-soft-text: #065f46; }
+    body[data-theme="purple"]  { --accent: #7c3aed; --accent-hover: #6d28d9; --accent-soft: #ede9fe; --accent-soft-text: #5b21b6; }
+    body[data-theme="amber"]   { --accent: #d97706; --accent-hover: #b45309; --accent-soft: #fef3c7; --accent-soft-text: #92400e; }
+    body[data-theme="crimson"] { --accent: #dc2626; --accent-hover: #b91c1c; --accent-soft: #fee2e2; --accent-soft-text: #991b1b; }
+
+    * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
+    body { background: var(--bg-body); padding: 12px; color: var(--text-main); transition: background 0.2s, color 0.2s; }
+    .container { max-width: 900px; margin: auto; background: var(--bg-card); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); overflow: hidden; }
+
+    /* Top Theme & Install Strip */
+    .theme-toolbar { max-width: 900px; margin: 0 auto 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 6px 10px; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border-light); }
+    .swatch-group { display: flex; align-items: center; gap: 6px; }
+    .swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--border-color); cursor: pointer; }
+    .swatch.active { transform: scale(1.2); box-shadow: 0 0 0 2px var(--text-main); }
+    .theme-btn { background: var(--bg-subtle); color: var(--text-main); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .install-btn { background: var(--accent); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; }
+
+    /* Header & Connection Pill */
+    .header { background: var(--header-bg); color: #fff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 3px solid var(--accent); }
+    .header h2 { font-size: 18px; }
+    .shop-meta { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+    .status-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pill { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .pill-online { background: #065f46; color: #d1fae5; }
+    .pill-offline { background: #991b1b; color: #fee2e2; }
+    .pill-queue { background: #92400e; color: #fef3c7; cursor: pointer; border: none; }
+    .btn-logout { background: #334155; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+
+    /* Login, Admin Auth & Lock Screens */
+    .auth-box { max-width: 410px; margin: 25px auto; background: var(--bg-card); padding: 28px; border-radius: 12px; box-shadow: 0 6px 25px rgba(0,0,0,0.12); border: 1px solid var(--border-light); }
+    .auth-box h2 { margin-bottom: 6px; text-align: center; }
+    .auth-box p { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 20px; }
+    .pw-wrap { position: relative; }
+    .pw-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); font-size: 12px; font-weight: 700; cursor: pointer; }
+    .admin-link-row { text-align: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-light); display: flex; flex-direction: column; gap: 10px; }
+    .link-btn { background: none; border: none; color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; }
+    .lock-banner { background: #fef2f2; border: 2px solid #f87171; color: #991b1b; padding: 20px; border-radius: 10px; text-align: center; margin: 20px; }
+
+    /* Navigation Tabs */
+    .tabs { display: flex; background: var(--bg-tabs); }
+    .tab { flex: 1; padding: 14px 8px; border: none; background: none; font-weight: 600; cursor: pointer; color: var(--text-muted); font-size: 13px; }
+    .tab.active { background: var(--bg-card); color: var(--accent); border-bottom: 3px solid var(--accent); }
+    .panel { display: none; padding: 20px; }
+    .panel.active { display: block; }
+
+    /* Forms & Inputs */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .pos-entry-box { background: var(--bg-subtle); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 18px; }
+    .grid-qty-amount { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; margin-top: 12px; }
+    label { display: block; font-size: 11px; font-weight: 700; margin-bottom: 5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--bg-card); color: var(--text-main); font-family: inherit; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+    /* Admin Toolbar */
+    .admin-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 16px 0 10px; }
+    .admin-search-input { flex: 1; min-width: 210px; padding: 9px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; }
+    .filter-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .filter-pill { padding: 6px 11px; border: 1.5px solid var(--border-color); background: var(--bg-subtle); color: var(--text-main); border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .filter-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* Buttons */
+    .btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 8px; font-size: 15px; }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:disabled { background: #64748b; cursor: not-allowed; }
+    .btn-green { background: var(--success); }
+    .btn-green:hover { background: var(--success-hover); }
+    .btn-dark { background: #1e293b; }
+    .btn-add-cart { padding: 10px 18px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; height: 42px; white-space: nowrap; }
+    .btn-qty { flex: 1; padding: 5px 4px; background: var(--bg-tabs); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .btn-remove { padding: 4px 9px; background: #fee2e2; color: #b91c1c; border: none; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .btn-restock { padding: 6px 12px; background: var(--accent); color: #fff; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-sm { padding: 5px 9px; border: none; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; margin-right: 4px; margin-bottom: 4px; }
+    .btn-sm-blue { background: var(--accent-soft); color: var(--accent-soft-text); }
+    .btn-sm-green { background: #d1fae5; color: #065f46; }
+    .btn-sm-red { background: #fee2e2; color: #991b1b; }
+
+    /* Cart & Tables */
+    .cart-box { border: 1.5px solid var(--border-light); border-radius: 8px; padding: 15px; background: var(--bg-subtle); margin-bottom: 18px; overflow-x: auto; }
+    .cart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .clear-cart-link { font-size: 12px; color: #ef4444; cursor: pointer; text-decoration: underline; background: none; border: none; }
+    .summary-box { background: var(--bg-subtle); border: 1.5px solid var(--accent); padding: 12px; border-radius: 6px; text-align: center; }
+    .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .card { background: var(--bg-subtle); border: 1px solid var(--border-light); padding: 15px; border-radius: 8px; text-align: center; }
+    .card h4 { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+    .card p { font-size: 20px; font-weight: 700; color: var(--text-main); margin-top: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: var(--bg-card); }
+    th, td { padding: 10px; border-bottom: 1px solid var(--border-light); text-align: left; }
+    th { background: var(--bg-subtle); }
+    .badge-low { background: #fee2e2; color: #b91c1c; padding: 3px 8px; border-radius: 12px; font-weight: 700; font-size: 11px; }
+    .badge-ok { background: #d1fae5; color: #065f46; padding: 3px 8px; border-radius: 12px; font-weight: 700; font-size: 11px; }
+    .alert { padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none; font-size: 14px; }
+    .alert.show { display: block; background: var(--accent-soft); color: var(--accent-soft-text); }
+    .helper-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .hidden { display: none !important; }
+    @media(max-width:650px){ .grid-2, .grid-3, .grid-qty-amount, .stat-cards { grid-template-columns: 1fr; } }
+
+    /* Modal & Receipt */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }
+    .modal-card { background: var(--bg-card); color: var(--text-main); border-radius: 12px; max-width: 420px; width: 100%; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.35); border: 1px solid var(--border-color); }
+    .receipt-paper { background: #fff; border: 1px dashed #94a3b8; padding: 16px; font-family: 'Courier New', monospace; font-size: 13px; color: #0f172a; line-height: 1.45; }
+    .receipt-line { display: flex; justify-content: space-between; }
+    .chart-box { background: var(--bg-subtle); border: 1px solid var(--border-light); border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+    canvas.pos-chart { width: 100%; height: 220px; display: block; }
+
+    @media print {
+      body * { visibility: hidden !important; }
+      #receiptPrintArea, #receiptPrintArea * { visibility: visible !important; }
+      #receiptPrintArea { position: fixed; left: 0; top: 0; width: 80mm; border: none; padding: 4mm; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== THEME & APP INSTALL BAR ==================== -->
+<div class="theme-toolbar">
+  <div class="swatch-group">
+    <span style="font-size:11px; font-weight:700; color:var(--text-muted);">THEME:</span>
+    <button type="button" class="swatch active" data-t="ocean" style="background:#2563eb;" title="Ocean Blue" onclick="setColorTheme('ocean', this)"></button>
+    <button type="button" class="swatch" data-t="emerald" style="background:#059669;" title="Emerald" onclick="setColorTheme('emerald', this)"></button>
+    <button type="button" class="swatch" data-t="purple" style="background:#7c3aed;" title="Royal Purple" onclick="setColorTheme('purple', this)"></button>
+    <button type="button" class="swatch" data-t="amber" style="background:#d97706;" title="Sunset Amber" onclick="setColorTheme('amber', this)"></button>
+    <button type="button" class="swatch" data-t="crimson" style="background:#dc2626;" title="Crimson" onclick="setColorTheme('crimson', this)"></button>
+    <button type="button" id="darkModeBtn" class="theme-btn" onclick="toggleDarkMode()">🌙 Dark</button>
+  </div>
+  <button type="button" id="installPwaBtn" class="install-btn" onclick="triggerPwaInstall()">📲 Download Phone App</button>
+</div>
+
+<!-- ==================== VIEW 1: SHOPKEEPER LOGIN SCREEN ==================== -->
+<div id="loginView" class="auth-box">
+  <h2>🏪 DukaPulse</h2>
+  <p>Sign in with your Shop Username (or ID) and Password</p>
+  <form onsubmit="handleLogin(event)">
+    <div style="margin-bottom:14px;">
+      <label>Username or Shop ID</label>
+      <input type="text" id="loginShopId" placeholder="e.g. kangaru_mart or SHOP-101" autocomplete="username" required>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label>Password (Letters, Numbers & Symbols)</label>
+      <div class="pw-wrap">
+        <input type="password" id="loginPin" placeholder="Enter your password" autocomplete="current-password" required>
+        <button type="button" class="pw-toggle" onclick="togglePasswordVisibility('loginPin', this)">Show</button>
+      </div>
+    </div>
+    <button type="submit" id="loginBtn" class="btn">Unlock POS</button>
+    <p id="loginError" style="color:#ef4444; margin-top:12px; font-weight:600;"></p>
+  </form>
+  <div class="admin-link-row">
+    <button type="button" class="link-btn" onclick="showView('adminLoginView')">🔑 Provider / Super-Admin Portal</button>
+  </div>
+</div>
+
+<!-- ==================== VIEW 1B: SUPER-ADMIN KEY LOGIN ==================== -->
+<div id="adminLoginView" class="auth-box hidden">
+  <h2>🔑 Super-Admin Portal</h2>
+  <p>Manage enrolled shops, onboarding & maintenance plans</p>
+  <form onsubmit="handleAdminLogin(event)">
+    <div style="margin-bottom:16px;">
+      <label>Master Admin Key</label>
+      <div class="pw-wrap">
+        <input type="password" id="masterAdminKeyInput" placeholder="Enter Master Admin Key" required>
+        <button type="button" class="pw-toggle" onclick="togglePasswordVisibility('masterAdminKeyInput', this)">Show</button>
+      </div>
+    </div>
+    <button type="submit" id="adminLoginBtn" class="btn btn-dark">Access Admin Console</button>
+    <p id="adminLoginError" style="color:#ef4444; margin-top:12px; font-weight:600;"></p>
+  </form>
+  <div class="admin-link-row">
+    <button type="button" class="link-btn" onclick="showView('loginView')">← Back to Shopkeeper Login</button>
+  </div>
+</div>
+
+<!-- ==================== VIEW 2: SUBSCRIPTION LOCK SCREEN ==================== -->
+<div id="lockedView" class="container hidden">
+  <div class="header">
+    <h2>🏪 DukaPulse</h2>
+    <button class="btn-logout" onclick="logoutShop()">Switch Shop</button>
+  </div>
+  <div class="lock-banner">
+    <h3>🔒 Account Suspended or Expired</h3>
+    <p id="lockReasonText" style="margin:12px 0; font-size:14px;"></p>
+    <p style="font-size:13px; color:#7f1d1d;">Please contact your system provider to renew your maintenance plan, then tap Retry below.</p>
+    <button class="btn" style="max-width:220px; margin:15px auto 0;" onclick="retryLocked()">🔄 Retry Connection</button>
+  </div>
+</div>
+
+<!-- ==================== VIEW 3: SUPER-ADMIN DASHBOARD ==================== -->
+<div id="adminDashboardView" class="container hidden">
+  <div class="header">
+    <div>
+      <h2>🔑 DukaPulse Admin Console</h2>
+      <div class="shop-meta">Master Client Registry & Subscription Manager</div>
+    </div>
+    <div class="status-bar">
+      <button class="btn-logout" onclick="refreshAdminShops()">🔄 Refresh</button>
+      <button class="btn-logout" onclick="exitAdminPortal()">Exit Admin</button>
+    </div>
+  </div>
+
+  <div style="padding:20px;">
+    <div id="adminAlert" class="alert"></div>
+
+    <div class="tabs" style="border-radius:8px; overflow:hidden; margin-bottom:18px;">
+      <button type="button" class="tab active" id="btnAdminTabShops" onclick="showAdminSubTab('adminTabShops', this)">🏪 Shops & Billing</button>
+      <button type="button" class="tab" id="btnAdminTabAnalytics" onclick="showAdminSubTab('adminTabAnalytics', this)">📊 Top Performing Shops</button>
+      <button type="button" class="tab" id="btnAdminTabOutreach" onclick="showAdminSubTab('adminTabOutreach', this)">✉️ Financial Advisory</button>
+    </div>
+
+    <!-- SUB-TAB 1: SHOPS & BILLING -->
+    <div id="adminTabShops" class="admin-subpanel">
+      <div class="pos-entry-box">
+        <h4 style="margin-bottom:12px;">➕ Onboard New Shopkeeper</h4>
+        <form onsubmit="adminCreateShop(event)">
+          <div class="grid-2">
+            <div>
+              <label>Shop Name *</label>
+              <input type="text" id="newShopName" placeholder="e.g. Kangaru Mini-Mart" required>
+            </div>
+            <div>
+              <label>Shop Login Username (Optional)</label>
+              <input type="text" id="newShopUsername" placeholder="e.g. kangaru_mart">
+            </div>
+          </div>
+          <div class="grid-3">
+            <div>
+              <label>Owner Full Name</label>
+              <input type="text" id="newOwnerName" placeholder="e.g. Peter Kamau">
+            </div>
+            <div>
+              <label>Owner Phone</label>
+              <input type="text" id="newOwnerPhone" placeholder="+2547...">
+            </div>
+            <div>
+              <label>Owner Email (For Alerts)</label>
+              <input type="email" id="newOwnerEmail" placeholder="shop@gmail.com">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label>Password (Letters, Numbers & Symbols) *</label>
+              <input type="text" id="newCashierPin" placeholder="e.g. Kangaru@2026!" required>
+            </div>
+            <div>
+              <label>Subscription Expiry Date *</label>
+              <input type="date" id="newExpiryDate" required>
+            </div>
+          </div>
+          <button type="submit" id="createShopBtn" class="btn btn-green">🚀 Create Shop & Generate DB</button>
+        </form>
+      </div>
+
+      <div class="admin-toolbar">
+        <h4>📋 Enrolled Shops (<span id="adminShopCount">0</span>)</h4>
+        <input type="text" id="adminSearchInput" class="admin-search-input" placeholder="🔍 Search Shop ID, Username, Name, Owner, or Phone..." oninput="applyAdminFilters()">
+        <div class="filter-pills" id="adminFilterPills">
+          <button type="button" class="filter-pill active" data-filter="ALL" onclick="setAdminStatusFilter('ALL', this)">All (<span id="countAll">0</span>)</button>
+          <button type="button" class="filter-pill" data-filter="ACTIVE" onclick="setAdminStatusFilter('ACTIVE', this)">Active (<span id="countActive">0</span>)</button>
+          <button type="button" class="filter-pill" data-filter="EXPIRING" onclick="setAdminStatusFilter('EXPIRING', this)">⏳ Expiring Soon (<span id="countExpiring">0</span>)</button>
+          <button type="button" class="filter-pill" data-filter="SUSPENDED" onclick="setAdminStatusFilter('SUSPENDED', this)">🔒 Suspended / Expired (<span id="countSuspended">0</span>)</button>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Shop ID / Username & Name</th>
+              <th>Owner / Password</th>
+              <th>Status</th>
+              <th>Expiry Date</th>
+              <th>Last Sync</th>
+              <th>Quick Controls</th>
+            </tr>
+          </thead>
+          <tbody id="adminShopsTableBody">
+            <tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Loading shops...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SUB-TAB 2: TOP PERFORMING SHOPS -->
+    <div id="adminTabAnalytics" class="admin-subpanel hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h4>📈 7-Day Network Performance (<span id="netAnalyticsTime">--</span>)</h4>
+        <button type="button" class="btn-sm btn-sm-blue" onclick="loadNetworkAnalytics(true)">🔄 Recalculate Live</button>
+      </div>
+      <div class="stat-cards">
+        <div class="card"><h4>Today's Network Sales</h4><p id="netTodayRev" style="color:var(--accent);">0.00</p></div>
+        <div class="card"><h4>7-Day Total Sales</h4><p id="net7dRev">0.00</p></div>
+        <div class="card"><h4>7-Day Net Profit</h4><p id="net7dProfit" style="color:#059669;">0.00</p></div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr><th>Rank</th><th>Shop</th><th>Today Sales</th><th>7-Day Sales</th><th>7-Day Profit</th><th>Receipts</th><th>Outreach</th></tr>
+          </thead>
+          <tbody id="adminLeaderboardBody">
+            <tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Tap "Top Performing Shops" to load analytics...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SUB-TAB 3: FINANCIAL ADVISORY -->
+    <div id="adminTabOutreach" class="admin-subpanel hidden">
+      <div class="pos-entry-box">
+        <h4 style="margin-bottom:10px;">📊 Generate Shop Financial Analysis & Recommendations</h4>
+        <div class="grid-2">
+          <div>
+            <label>1. Select Shopkeeper</label>
+            <select id="advisoryShopSelect" onchange="fetchShopAdvisoryDraft()"><option value="">-- Select a Shop --</option></select>
+          </div>
+          <div>
+            <label>2. Quick Recommendation Template</label>
+            <select id="advisoryTemplateSelect" onchange="applyAdvisoryTemplate()">
+              <option value="weekly_review">Weekly Financial Health & Growth Review</option>
+              <option value="restock_focus">Low-Stock & Fast-Mover Restock Advisory</option>
+              <option value="inactive_nudge">Re-Engagement & POS Sync Check-In</option>
+            </select>
+          </div>
+        </div>
+        <div id="advisoryContactSummary" class="helper-hint" style="margin-bottom:12px; font-size:12px;">
+          Select a shop above to auto-load their 7-day revenue, profit margin, and contact details.
+        </div>
+        <div style="margin-bottom:12px;"><label>Email Subject</label><input type="text" id="advisorySubject" placeholder="Subject line..."></div>
+        <div style="margin-bottom:12px;"><label>Advisory Message</label><textarea id="advisoryBody" rows="8"></textarea></div>
+        <div class="grid-2">
+          <button type="button" id="sendAdvisoryEmailBtn" class="btn btn-green" onclick="sendAdvisoryEmailNow()">📧 Send via Email</button>
+          <button type="button" id="sendAdvisoryWaBtn" class="btn btn-dark" onclick="openAdvisoryWhatsApp()">💬 Send via WhatsApp</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== VIEW 4: MAIN SHOPKEEPER POS APP ==================== -->
+<div id="appView" class="container hidden">
+  <div class="header">
+    <div>
+      <h2 id="headerShopName">🏪 DukaPulse</h2>
+      <div class="shop-meta" id="headerShopMeta">ID: -- | Valid until: --</div>
+    </div>
+    <div class="status-bar">
+      <span id="netBadge" class="pill pill-online">● ONLINE</span>
+      <button id="queueBadge" class="pill pill-queue hidden" onclick="syncWithServer()">⏳ 0 Unsynced (Tap to Sync)</button>
+      <button class="btn-logout" onclick="logoutShop()">Lock</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button type="button" class="tab active" onclick="showTab(event, 'pos')">🛒 Record Sale</button>
+    <button type="button" class="tab" onclick="showTab(event, 'inventory')">📦 Inventory</button>
+    <button type="button" class="tab" onclick="showTab(event, 'tabAnalytics')">📈 Progress & Charts</button>
+    <button type="button" class="tab" onclick="showTab(event, 'analytics')">📊 Daily Reports</button>
+  </div>
+
+  <!-- TAB 1: POINT OF SALE -->
+  <div id="pos" class="panel active">
+    <div id="posAlert" class="alert"></div>
+    <div class="pos-entry-box">
+      <div>
+        <label>1. Select Product</label>
+        <select id="saleItemSelect" onchange="onProductSelectChange()"><option value="">-- Choose Product --</option></select>
+      </div>
+      <div class="grid-qty-amount">
+        <div>
+          <label>2A. Quantity (Units / Kg / L)</label>
+          <input type="number" id="saleQty" min="0.001" step="any" value="1" oninput="syncFromQty()">
+          <div style="display:flex; gap:5px; margin-top:6px;">
+            <button type="button" class="btn-qty" onclick="setQuickQty(0.25)">¼ (0.25)</button>
+            <button type="button" class="btn-qty" onclick="setQuickQty(0.5)">½ (0.5)</button>
+            <button type="button" class="btn-qty" onclick="setQuickQty(0.75)">¾ (0.75)</button>
+            <button type="button" class="btn-qty" onclick="setQuickQty(1)">1</button>
+          </div>
+        </div>
+        <div>
+          <label>2B. Or Sell by Cash Amount</label>
+          <input type="number" id="saleCashAmount" min="0.01" step="any" placeholder="e.g. 50" oninput="syncFromCashAmount()">
+          <div class="helper-hint">Auto-calculates exact weight/qty</div>
+        </div>
+        <button type="button" class="btn-add-cart" onclick="addItemToCart()">➕ Add to Cart</button>
+      </div>
+    </div>
+
+    <div class="cart-box">
+      <div class="cart-header">
+        <h4>🧾 Current Receipt (<span id="cartItemCount">0</span> items)</h4>
+        <button type="button" class="clear-cart-link" onclick="clearCart()">Clear Cart</button>
+      </div>
+      <table>
+        <thead><tr><th>Product</th><th>Unit Price</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead>
+        <tbody id="cartTableBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Cart is empty. Select a product above.</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <label>Payment Mode</label>
+        <select id="paymentMode" onchange="toggleMpesaPhoneBox()">
+          <option value="Cash">💵 Cash (Instant Receipt)</option>
+          <option value="MPESA_STK">📲 M-Pesa Express (Prompt Customer PIN)</option>
+          <option value="Mobile Money">📱 Manual M-Pesa / Till</option>
+          <option value="Card">💳 Card</option>
+        </select>
+        <div id="mpesaCustomerPhoneBox" style="display:none; margin-top:8px;">
+          <label>Customer M-Pesa Number *</label>
+          <input type="tel" id="customerMpesaPhone" placeholder="e.g. 0712345678">
+        </div>
+      </div>
+      <div class="summary-box">
+        <small>Grand Total</small>
+        <h2 id="cartGrandTotal" style="color:var(--accent);">0.00</h2>
+      </div>
+    </div>
+
+    <button type="button" id="checkoutBtn" class="btn btn-green" onclick="handleCheckoutSubmit()" disabled>
+      ✅ Complete Checkout & Print Receipt
+    </button>
+  </div>
+
+  <!-- TAB 2: INVENTORY -->
+  <div id="inventory" class="panel">
+    <div id="invAlert" class="alert"></div>
+    <h4 style="margin-bottom:10px;">Add New Product (Requires Internet)</h4>
+    <form onsubmit="addNewProduct(event)">
+      <div class="grid-2">
+        <div><label>Product Name</label><input type="text" id="prodName" placeholder="e.g. Sugar (per Kg)" required></div>
+        <div><label>Category</label><input type="text" id="prodCat" placeholder="e.g. Groceries" required></div>
+      </div>
+      <div class="grid-2">
+        <div><label>Buying Price (Cost)</label><input type="number" id="prodBuy" step="any" required></div>
+        <div><label>Selling Price</label><input type="number" id="prodSell" step="any" required></div>
+      </div>
+      <div class="grid-2">
+        <div><label>Initial Stock Qty</label><input type="number" id="prodStock" min="0" step="any" required></div>
+        <div><label>Low Stock Alert Level</label><input type="number" id="prodReorder" value="5" min="0.1" step="any" required></div>
+      </div>
+      <button type="submit" id="addProdBtn" class="btn btn-green">➕ Save Product to Inventory</button>
+    </form>
+
+    <h4 style="margin-top:25px;">Current Stock Levels (Offline Cached)</h4>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>ID</th><th>Product</th><th>Sell Price</th><th>In Stock</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="inventoryTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 3: SHOP PROGRESS & GRAPHED ANALYTICS -->
+  <div id="tabAnalytics" class="panel">
+    <div class="stat-cards">
+      <div class="card"><h4>7-Day Revenue</h4><p id="chart7dRev" style="color:var(--accent);">0.00</p></div>
+      <div class="card"><h4>Net Profit</h4><p id="chart7dProfit" style="color:#059669;">0.00</p></div>
+      <div class="card"><h4>Profit Margin</h4><p id="chartMarginPct">0%</p></div>
+    </div>
+    <div class="chart-box">
+      <h4 style="margin-bottom:8px;">📊 Sales vs. Net Profit Trend (7 Days)</h4>
+      <canvas id="salesTrendCanvas" class="pos-chart" width="640" height="220"></canvas>
+    </div>
+    <div class="chart-box">
+      <h4 style="margin-bottom:8px;">🏆 Top 5 Best-Selling Products</h4>
+      <canvas id="topProductsCanvas" class="pos-chart" width="640" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- TAB 4: REPORTS & ANALYTICS -->
+  <div id="analytics" class="panel">
+    <h4 style="margin-bottom:12px;">Today's Sales Breakdown (<span id="todayDateLabel">--</span>)</h4>
+    <div class="stat-cards">
+      <div class="card"><h4>Today's Revenue</h4><p id="dayRevenue" style="color:var(--accent);">0.00</p></div>
+      <div class="card"><h4>Today's Net Profit</h4><p id="dayProfit" style="color:#059669;">0.00</p></div>
+      <div class="card"><h4>Customer Receipts</h4><p id="dayTx">0</p></div>
+    </div>
+    <div class="card" style="text-align:left; margin-bottom:20px;">
+      <p style="font-size:14px;"><strong>🏆 Top Selling Item Today:</strong> <span id="dayTopItem">None</span></p>
+      <p style="font-size:14px; margin-top:8px;"><strong>💳 Sales by Payment Mode:</strong> <span id="dayPayments">--</span></p>
+    </div>
+    <button class="btn" id="weeklyBtn" onclick="triggerWeeklyReport()">📊 Generate 7-Day Weekly Report Now</button>
+    <div id="weeklyResult" class="summary-box" style="display:none; text-align:left; margin-top:15px;"></div>
+  </div>
+</div>
+
+<!-- ==================== M-PESA STATUS & PRINTABLE RECEIPT MODAL ==================== -->
+<div id="paymentReceiptModal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <div id="mpesaWaitingState">
+      <h3 style="margin-bottom:8px;">📲 Waiting for Customer PIN...</h3>
+      <p id="mpesaPromptStatusText" style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">
+        An M-Pesa prompt has been sent to the customer's phone. Ask them to enter their M-Pesa PIN.
+      </p>
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn btn-dark" onclick="checkMpesaNowManual(false)">🔄 Check Payment Now</button>
+        <button type="button" class="btn-sm btn-sm-red" style="padding:10px 14px;" onclick="cancelMpesaWait()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="receiptConfirmedState" class="hidden">
+      <div style="text-align:center; color:#059669; font-weight:700; margin-bottom:10px;">
+        ✅ Payment Confirmed & Stock Updated!
+      </div>
+      <div id="receiptPrintArea" class="receipt-paper"></div>
+      <div class="grid-2" style="margin-top:14px;">
+        <button type="button" class="btn btn-dark" onclick="window.print()">🖨️ Print Receipt</button>
+        <button type="button" class="btn btn-green" onclick="closeReceiptModal()">Done / Next Sale</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbyM0xc0JwL1UNwBn1IICSH5TxiZLDDPamnQE_ecTzi-jlXTrHqWolSS7i8qYyq21J7j/exec";
+
+  const STORAGE_KEYS = {
+    AUTH: "pos_tenant_auth",
+    SHOP_META: "pos_tenant_meta",
+    INVENTORY: "pos_tenant_inventory",
+    DAILY_STATS: "pos_tenant_daily_stats",
+    OFFLINE_QUEUE: "pos_offline_receipt_queue",
+    SALES_HISTORY: "pos_tenant_sales_history",
+    DARK_MODE: "pos_ui_dark_mode",
+    COLOR_THEME: "pos_ui_color_theme"
+  };
+
+  let cart = [];
+  let isSyncing = false;
+  let activeAdminKey = "";
+  let allAdminShops = [];
+  let activeAdminFilter = "ALL";
+  let activeAdvisoryData = null;
+  let activeMpesaCheckoutId = null;
+  let mpesaPollTimer = null;
+  let deferredInstallPrompt = null;
+  let lastSyncAt = 0;
+
+  // ---- helpers: XSS-safe output, LOCAL dates (not UTC), collision-proof receipt IDs, POST-only API ----
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const newReceiptId = () => "RCP-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+  // ---- local offline unlock: PBKDF2 verifier (the password itself is NEVER stored) ----
+  const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  async function pbkdf2(pw, salt, iter) {
+    const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveBits"]);
+    return b64(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: iter }, k, 256));
+  }
+  async function makeLocalVerifier(pw) {
+    const salt = crypto.getRandomValues(new Uint8Array(16)), iter = 150000;
+    return { salt: b64(salt), iter, hash: await pbkdf2(pw, salt, iter) };
+  }
+  async function verifyLocal(pw, v) {
+    if (!v || !v.salt) return false;
+    return (await pbkdf2(pw, Uint8Array.from(atob(v.salt), c => c.charCodeAt(0)), v.iter)) === v.hash;
+  }
+  const authCreds = a => a.token ? { token: a.token } : { pin: a.pin };
+  function saveToken(t) {
+    const a = getStoredAuth();
+    if (a && t) { a.token = t; delete a.pin; localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(a)); }
+  }
+  let lockedCreds = null;   // memory only, used for "Retry" on the suspended screen
+  async function migrateLegacyAuth() {   // upgrades phones that still hold a stored password
+    const a = getStoredAuth();
+    if (!a || !a.pin || a.token || !navigator.onLine) return;
+    try {
+      const d = await api({ action: "bootstrap", shopId: a.shopId, pin: a.pin });
+      if (d.ok && d.token) { a.token = d.token; a.verifier = await makeLocalVerifier(a.pin); delete a.pin; localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(a)); }
+    } catch (e) {}
+  }
+  async function finishLogin(data, identifier, password) {
+    const verifier = await makeLocalVerifier(password);
+    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify({
+      shopId: data.shop.shopId || identifier.toUpperCase(), username: data.shop.username || identifier, token: data.token, verifier
+    }));
+    localStorage.setItem(STORAGE_KEYS.SHOP_META, JSON.stringify(data.shop));
+    localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(data.inventory || []));
+    localStorage.setItem(STORAGE_KEYS.DAILY_STATS, JSON.stringify(data.dailyStats || {}));
+    showAppFromLocalCache();
+  }
+  async function retryLocked() {
+    if (!lockedCreds) return syncWithServer();
+    try {
+      const d = await api({ action: "bootstrap", shopId: lockedCreds.shopId, pin: lockedCreds.pin });
+      if (d.ok) { const c = lockedCreds; lockedCreds = null; await finishLogin(d, c.shopId, c.pin); }
+      else document.getElementById("lockReasonText").textContent = d.error;
+    } catch (e) { alert("❌ Network error."); }
+  }
+  async function api(body) {
+    const res = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
+    return res.json();
+  }
+
+  // =========================================================================
+  // PWA PHONE APP INSTALLER & THEME ENGINE
+  // =========================================================================
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js").catch(err => console.warn("SW failed:", err));
+  }
+
+  const isStandalone = () =>
+    window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true ||
+    document.referrer.startsWith("android-app://") ||
+    !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  function setInstallBtn(visible) { const b = document.getElementById("installPwaBtn"); if (b) b.style.display = visible ? "" : "none"; }
+  function refreshInstallBtn() {
+    let flag = false;
+    try { flag = localStorage.getItem("pos_pwa_installed") === "1"; } catch (e) {}
+    setInstallBtn(!(isStandalone() || flag));
+  }
+  // beforeinstallprompt only fires when the app is NOT installed -> clears a stale "installed" flag (e.g. after uninstall)
+  window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    try { localStorage.removeItem("pos_pwa_installed"); } catch (e2) {}
+    setInstallBtn(true);
+    const btn = document.getElementById("installPwaBtn");
+    if (btn) btn.textContent = "📲 Install DukaPulse";
+  });
+  window.addEventListener("appinstalled", () => {
+    try { localStorage.setItem("pos_pwa_installed", "1"); } catch (e) {}
+    deferredInstallPrompt = null;
+    setInstallBtn(false);
+  });
+
+  async function triggerPwaInstall() {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === "accepted") {
+        document.getElementById("installPwaBtn").style.display = "none";
+      }
+      deferredInstallPrompt = null;
+    } else {
+      alert(
+        "📲 To install DukaPulse onto your phone's Home Screen:\n\n" +
+        "• Android (Chrome): Tap the 3 dots (⋮) in the top-right corner and select 'Install app' or 'Add to Home screen'.\n" +
+        "• iPhone (Safari): Tap the Share icon (↑) at the bottom and select 'Add to Home Screen'."
+      );
+    }
+  }
+
+  function initThemePreferences() {
+    const isDark = localStorage.getItem(STORAGE_KEYS.DARK_MODE) === "1";
+    const savedTheme = localStorage.getItem(STORAGE_KEYS.COLOR_THEME) || "ocean";
+    if (isDark) {
+      document.body.classList.add("dark-mode");
+      document.getElementById("darkModeBtn").textContent = "☀️ Light";
+    }
+    document.body.setAttribute("data-theme", savedTheme);
+    document.querySelectorAll(".swatch").forEach(s => {
+      s.classList.toggle("active", s.dataset.t === savedTheme);
+    });
+  }
+
+  function toggleDarkMode() {
+    const isDark = document.body.classList.toggle("dark-mode");
+    localStorage.setItem(STORAGE_KEYS.DARK_MODE, isDark ? "1" : "0");
+    document.getElementById("darkModeBtn").textContent = isDark ? "☀️ Light" : "🌙 Dark";
+    renderShopProgressCharts();
+  }
+
+  function setColorTheme(themeName, swatchEl) {
+    document.body.setAttribute("data-theme", themeName);
+    localStorage.setItem(STORAGE_KEYS.COLOR_THEME, themeName);
+    document.querySelectorAll(".swatch").forEach(s => s.classList.remove("active"));
+    if (swatchEl) swatchEl.classList.add("active");
+  }
+
+  function togglePasswordVisibility(inputId, btnEl) {
+    const inp = document.getElementById(inputId);
+    if (!inp) return;
+    if (inp.type === "password") {
+      inp.type = "text";
+      btnEl.textContent = "Hide";
+    } else {
+      inp.type = "password";
+      btnEl.textContent = "Show";
+    }
+  }
+
+  window.addEventListener("online", () => { updateNetworkUI(); syncWithServer(); });
+  window.addEventListener("offline", updateNetworkUI);
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    initThemePreferences();
+    refreshInstallBtn();
+    updateNetworkUI();
+    setDefaultNewExpiryDate();
+
+    if (await restoreAdminSession()) return;
+
+    const auth = getStoredAuth();
+    if (auth && auth.shopId && (auth.token || auth.pin)) {
+      showAppFromLocalCache();
+      if (navigator.onLine) migrateLegacyAuth().then(syncWithServer);
+    } else {
+      showView("loginView");
+    }
+  });
+
+  function showView(viewId) {
+    ["loginView", "adminLoginView", "lockedView", "adminDashboardView", "appView"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("hidden", id !== viewId);
+    });
+    window.scrollTo(0, 0);
+  }
+
+  // =========================================================================
+  // SUPER-ADMIN PORTAL LOGIC
+  // =========================================================================
+  function setDefaultNewExpiryDate() {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    const pad = n => String(n).padStart(2, "0");
+    document.getElementById("newExpiryDate").value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  async function handleAdminLogin(e) {
+    e.preventDefault();
+    if (!navigator.onLine) {
+      document.getElementById("adminLoginError").textContent = "Internet connection required for Admin Console.";
+      return;
+    }
+
+    const key = document.getElementById("masterAdminKeyInput").value.trim();
+    const errEl = document.getElementById("adminLoginError");
+    const btn = document.getElementById("adminLoginBtn");
+
+    errEl.textContent = "";
+    btn.disabled = true;
+    btn.textContent = "Verifying Key...";
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "admin_list_shops", adminKey: key })
+      });
+      const data = await res.json();
+
+      if (!data.ok) {
+        errEl.textContent = data.error || "Invalid Master Admin Key.";
+        return;
+      }
+
+      activeAdminKey = data.adminToken || key;
+      if (data.adminToken) { try { sessionStorage.setItem("pos_admin_token", data.adminToken); } catch (e) {} }
+      allAdminShops = data.shops || [];
+      document.getElementById("masterAdminKeyInput").value = "";
+      renderAdminShopsTable(allAdminShops);
+      populateAdvisoryShopDropdown();
+      showView("adminDashboardView");
+    } catch (err) {
+      errEl.textContent = "Network error connecting to backend.";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Access Admin Console";
+    }
+  }
+
+  async function restoreAdminSession() {
+    let tok = "";
+    try { tok = sessionStorage.getItem("pos_admin_token") || ""; } catch (e) {}
+    if (!tok || !navigator.onLine) return false;
+    showView("");   // blank screen while we check, so the login page doesn't flash
+    try {
+      const d = await api({ action: "admin_list_shops", adminKey: tok });
+      if (d.ok) {
+        activeAdminKey = d.adminToken || tok;
+        try { sessionStorage.setItem("pos_admin_token", activeAdminKey); } catch (e) {}
+        allAdminShops = d.shops || [];
+        renderAdminShopsTable(allAdminShops);
+        populateAdvisoryShopDropdown();
+        showView("adminDashboardView");
+        return true;
+      }
+    } catch (e) {}
+    try { sessionStorage.removeItem("pos_admin_token"); } catch (e) {}
+    return false;
+  }
+
+  function exitAdminPortal() {
+    activeAdminKey = "";
+    try { sessionStorage.removeItem("pos_admin_token"); } catch (e) {}
+    showView("loginView");
+  }
+
+  async function refreshAdminShops() {
+    if (!activeAdminKey) return;
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "admin_list_shops", adminKey: activeAdminKey })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        allAdminShops = data.shops || [];
+        renderAdminShopsTable(allAdminShops);
+        populateAdvisoryShopDropdown();
+        showAdminAlert("🔄 Shop registry refreshed.");
+      }
+    } catch (e) {
+      alert("Failed to refresh shop list.");
+    }
+  }
+
+  async function adminCreateShop(e) {
+    e.preventDefault();
+    const btn = document.getElementById("createShopBtn");
+    btn.disabled = true;
+    btn.textContent = "Creating Shop...";
+
+    try {
+      const payload = {
+        shopName: document.getElementById("newShopName").value,
+        username: document.getElementById("newShopUsername").value.trim(),
+        ownerName: document.getElementById("newOwnerName").value,
+        ownerPhone: document.getElementById("newOwnerPhone").value,
+        ownerEmail: document.getElementById("newOwnerEmail").value,
+        cashierPin: document.getElementById("newCashierPin").value,
+        expiryDate: document.getElementById("newExpiryDate").value
+      };
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "admin_create_shop", adminKey: activeAdminKey, payload })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+
+      e.target.reset();
+      setDefaultNewExpiryDate();
+      allAdminShops = data.shops || [];
+      renderAdminShopsTable(allAdminShops);
+      populateAdvisoryShopDropdown();
+
+      showAdminAlert(`✅ Enrolled ${data.created.shopName}! ID: ${data.created.shopId} | Password: ${data.created.pin}`);
+    } catch (err) {
+      alert("❌ Network error creating shop.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "🚀 Create Shop & Generate DB";
+    }
+  }
+
+  async function adminUpdateShop(shopId, updates) {
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "admin_update_shop", adminKey: activeAdminKey, payload: { shopId, ...updates } })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+
+      allAdminShops = data.shops || [];
+      renderAdminShopsTable(allAdminShops);
+      showAdminAlert("✅ " + data.message);
+    } catch (e) {
+      alert("❌ Network error updating shop.");
+    }
+  }
+
+  async function adminDeleteShop(shopId, shopName) {
+    const confirmation = prompt(`⚠️ PERMANENT ACTION:\nType "${shopId}" below to delete "${shopName}" and move its spreadsheet to Trash:`);
+    if (confirmation === null) return;
+    if (confirmation.trim().toUpperCase() !== shopId.toUpperCase()) {
+      return alert("❌ Deletion cancelled — Shop ID did not match.");
+    }
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "admin_delete_shop", adminKey: activeAdminKey, payload: { shopId } })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+
+      allAdminShops = data.shops || [];
+      renderAdminShopsTable(allAdminShops);
+      populateAdvisoryShopDropdown();
+      showAdminAlert("🗑️ " + data.message);
+    } catch (e) {
+      alert("❌ Network error deleting shop.");
+    }
+  }
+
+  function extendShop30Days(shopId, currentExpiry) {
+    const base = currentExpiry && currentExpiry > localDate()
+      ? new Date(currentExpiry + "T00:00:00") : new Date();
+    base.setDate(base.getDate() + 30);
+    const pad = n => String(n).padStart(2, "0");
+    const nextDate = `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`;
+    if (confirm(`Extend ${shopId} subscription by 30 days to ${nextDate}?`)) {
+      adminUpdateShop(shopId, { expiryDate: nextDate, planStatus: "ACTIVE" });
+    }
+  }
+
+  function promptCustomExpiry(shopId, currentExpiry) {
+    const newDate = prompt(`Enter new Expiry Date for ${shopId} (YYYY-MM-DD):`, currentExpiry);
+    if (!newDate) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate.trim())) return alert("Use YYYY-MM-DD format.");
+    adminUpdateShop(shopId, { expiryDate: newDate.trim() });
+  }
+
+  function promptResetPassword(shopId, shopName) {
+    const newPw = prompt(`Enter new Password for ${shopName} (${shopId}) (letters, numbers & symbols allowed, min 4 chars):`, "");
+    if (newPw === null || !newPw.trim()) return;
+    const cleanPw = newPw.trim();
+    if (cleanPw.length < 4) return alert("❌ Password must be at least 4 characters.");
+    adminUpdateShop(shopId, { cashierPin: cleanPw });
+  }
+
+  function setAdminStatusFilter(filterKey, btnEl) {
+    activeAdminFilter = filterKey;
+    document.querySelectorAll("#adminFilterPills .filter-pill").forEach(b => b.classList.remove("active"));
+    if (btnEl) btnEl.classList.add("active");
+    applyAdminFilters();
+  }
+
+  function getShopLifecycleState(shop, todayStr) {
+    if (shop.planStatus !== "ACTIVE") return "SUSPENDED";
+    if (shop.expiryDate && todayStr > shop.expiryDate) return "EXPIRED";
+    if (shop.expiryDate) {
+      const daysLeft = Math.round((new Date(shop.expiryDate + "T00:00:00Z") - new Date(todayStr + "T00:00:00Z")) / 86400000);
+      if (daysLeft >= 0 && daysLeft <= 3) return "EXPIRING";
+    }
+    return "ACTIVE";
+  }
+
+  function renderAdminShopsTable(shops) {
+    allAdminShops = Array.isArray(shops) ? shops : [];
+    const todayStr = localDate();
+    let cActive = 0, cExpiring = 0, cSuspended = 0;
+    allAdminShops.forEach(s => {
+      const state = getShopLifecycleState(s, todayStr);
+      if (state === "SUSPENDED" || state === "EXPIRED") cSuspended++;
+      else if (state === "EXPIRING") { cActive++; cExpiring++; }
+      else cActive++;
+    });
+    document.getElementById("countAll").textContent = allAdminShops.length;
+    document.getElementById("countActive").textContent = cActive;
+    document.getElementById("countExpiring").textContent = cExpiring;
+    document.getElementById("countSuspended").textContent = cSuspended;
+    applyAdminFilters();
+  }
+
+  function applyAdminFilters() {
+    const tbody = document.getElementById("adminShopsTableBody");
+    const query = (document.getElementById("adminSearchInput")?.value || "").trim().toLowerCase();
+    const todayStr = localDate();
+
+    const filtered = allAdminShops.filter(s => {
+      const state = getShopLifecycleState(s, todayStr);
+      if (activeAdminFilter === "ACTIVE" && (state === "SUSPENDED" || state === "EXPIRED")) return false;
+      if (activeAdminFilter === "EXPIRING" && state !== "EXPIRING") return false;
+      if (activeAdminFilter === "SUSPENDED" && state !== "SUSPENDED" && state !== "EXPIRED") return false;
+      if (query) {
+        const haystack = `${s.shopId} ${s.username || ""} ${s.shopName} ${s.ownerName} ${s.ownerPhone}`.toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
+      return true;
+    });
+
+    document.getElementById("adminShopCount").textContent = `${filtered.length} of ${allAdminShops.length}`;
+    if (!filtered.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No matching shops found.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(s => {
+      const state = getShopLifecycleState(s, todayStr);
+      const isSuspended = s.planStatus !== "ACTIVE";
+      const badgeClass = (state === "SUSPENDED" || state === "EXPIRED") ? "badge-low" : "badge-ok";
+      const badgeLabel = state === "EXPIRING" ? "EXPIRING SOON" : state;
+      const toggleTarget = isSuspended ? "ACTIVE" : "SUSPENDED";
+      const toggleBtnClass = isSuspended ? "btn-sm-green" : "btn-sm-red";
+      const toggleBtnLabel = isSuspended ? "▶ Activate" : "⏸ Suspend";
+
+      return `
+        <tr>
+          <td>
+            <strong>${esc(s.shopId)}</strong> ${s.username ? `<small style="color:var(--accent);">(@${esc(s.username)})</small>` : ""}<br>
+            <span style="font-size:12px;">${esc(s.shopName)}</span>
+          </td>
+          <td>
+            <span style="font-size:12px;">${esc(s.ownerName || "--")} (${esc(s.ownerPhone || "No phone")})</span><br>
+            <small style="color:var(--text-muted);">Pass: <strong>🔒 hashed</strong></small>
+          </td>
+          <td><span class="${badgeClass}">${badgeLabel}</span></td>
+          <td><strong>${s.expiryDate || "--"}</strong></td>
+          <td style="font-size:11px; color:var(--text-muted);">${s.lastSync}</td>
+          <td>
+            <button type="button" class="btn-sm btn-sm-blue" onclick="extendShop30Days('${s.shopId}', '${s.expiryDate}')">+30 Days</button>
+            <button type="button" class="btn-sm btn-sm-blue" onclick="promptCustomExpiry('${s.shopId}', '${s.expiryDate}')">Set Date</button>
+            <button type="button" class="btn-sm btn-sm-blue" data-id="${esc(s.shopId)}" data-name="${esc(s.shopName)}" onclick="promptResetPassword(this.dataset.id, this.dataset.name)">🔑 Password</button>
+            <button type="button" class="btn-sm ${toggleBtnClass}" onclick="adminUpdateShop('${s.shopId}', { planStatus: '${toggleTarget}' })">${toggleBtnLabel}</button>
+            <button type="button" class="btn-sm btn-sm-red" data-id="${esc(s.shopId)}" data-name="${esc(s.shopName)}" onclick="adminDeleteShop(this.dataset.id, this.dataset.name)">🗑 Delete</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function showAdminAlert(msg) {
+    const box = document.getElementById("adminAlert");
+    box.textContent = msg;
+    box.classList.add("show");
+    setTimeout(() => box.classList.remove("show"), 6000);
+  }
+
+  function showAdminSubTab(panelId, btnEl) {
+    document.querySelectorAll(".admin-subpanel").forEach(p => p.classList.add("hidden"));
+    document.querySelectorAll("#adminDashboardView .tabs .tab").forEach(t => t.classList.remove("active"));
+    document.getElementById(panelId).classList.remove("hidden");
+    if (btnEl) btnEl.classList.add("active");
+    if (panelId === "adminTabAnalytics") loadNetworkAnalytics(false);
+    if (panelId === "adminTabOutreach") populateAdvisoryShopDropdown();
+  }
+
+  async function loadNetworkAnalytics(forceRefresh) {
+    if (!activeAdminKey) return;
+    const tbody = document.getElementById("adminLeaderboardBody");
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">⏳ Aggregating sales...</td></tr>`;
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "admin_network_analytics", adminKey: activeAdminKey, forceRefresh: Boolean(forceRefresh) })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+      const a = data.analytics;
+      document.getElementById("netAnalyticsTime").textContent = (a.generatedAt || "--") + (a.pendingShops ? ` — ${a.pendingShops} shop(s) not refreshed yet, tap Recalculate to continue` : "");
+      document.getElementById("netTodayRev").textContent = (a.todayRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+      document.getElementById("net7dRev").textContent = (a.totalRevenue7d || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+      document.getElementById("net7dProfit").textContent = (a.totalProfit7d || 0).toLocaleString(undefined, { minimumFractionDigits: 2 });
+      const rows = a.leaderboard || [];
+      tbody.innerHTML = rows.length ? rows.map((s, idx) => {
+        const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
+        return `<tr><td><strong>${medal}</strong></td><td><strong>${esc(s.shopName)}</strong><br><small>${esc(s.shopId)}</small></td><td>${s.todayRev.toFixed(2)}</td><td><strong>${s.rev7d.toFixed(2)}</strong></td><td style="color:#059669;font-weight:700;">${s.profit7d.toFixed(2)}</td><td>${s.receipts7d}</td><td><button type="button" class="btn-sm btn-sm-blue" onclick="jumpToShopAdvisory('${s.shopId}')">✉️ Advise</button></td></tr>`;
+      }).join("") : `<tr><td colspan="7" style="text-align:center;">No sales recorded yet.</td></tr>`;
+    } catch (e) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;">Failed to load analytics.</td></tr>`;
+    }
+  }
+
+  async function populateAdvisoryShopDropdown(preselectShopId) {
+    const sel = document.getElementById("advisoryShopSelect");
+    if (!sel) return;
+    if ((!allAdminShops || allAdminShops.length === 0) && activeAdminKey) {
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "admin_list_shops", adminKey: activeAdminKey })
+        });
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.shops)) allAdminShops = data.shops;
+      } catch (e) {}
+    }
+    if (!allAdminShops.length) {
+      sel.innerHTML = `<option value="">No enrolled shops found</option>`;
+      return;
+    }
+    sel.innerHTML = `<option value="">-- Choose a Shop (${allAdminShops.length}) --</option>` +
+      allAdminShops.map(s => `<option value="${esc(s.shopId)}">${esc(s.shopId)} — ${esc(s.shopName)}</option>`).join("");
+    if (preselectShopId) { sel.value = preselectShopId; fetchShopAdvisoryDraft(); }
+  }
+
+  function jumpToShopAdvisory(shopId) {
+    showAdminSubTab("adminTabOutreach", document.getElementById("btnAdminTabOutreach"));
+    populateAdvisoryShopDropdown(shopId);
+  }
+
+  async function fetchShopAdvisoryDraft() {
+    const shopId = document.getElementById("advisoryShopSelect").value;
+    if (!shopId) return;
+    document.getElementById("advisoryContactSummary").textContent = "⏳ Fetching shop metrics...";
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "admin_shop_advisory_data", adminKey: activeAdminKey, payload: { shopId } })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+      activeAdvisoryData = data.advisory;
+      document.getElementById("advisoryContactSummary").innerHTML =
+        `📧 Email: <strong>${esc(activeAdvisoryData.ownerEmail || "None")}</strong> | 📱 Phone: <strong>${esc(activeAdvisoryData.ownerPhone || "None")}</strong>`;
+      applyAdvisoryTemplate();
+    } catch (e) { alert("❌ Network error."); }
+  }
+
+  function applyAdvisoryTemplate() {
+    if (!activeAdvisoryData) return;
+    const d = activeAdvisoryData;
+    const tpl = document.getElementById("advisoryTemplateSelect").value;
+    if (tpl === "weekly_review") {
+      document.getElementById("advisorySubject").value = `📊 Weekly Financial Analysis — ${d.shopName}`;
+      document.getElementById("advisoryBody").value = `Hello ${d.ownerName},\n\n7-Day Snapshot for ${d.shopName}:\n• Total Sales: ${d.rev7d.toFixed(2)}\n• Net Profit: ${d.profit7d.toFixed(2)} (${d.marginPct}%)\n• Receipts: ${d.receipts7d}\n• Top Product: ${d.topProduct}\n• Low-Stock Watchlist: ${d.lowStockList}\n\n— The DukaPulse Team`;
+    } else if (tpl === "restock_focus") {
+      document.getElementById("advisorySubject").value = `⚠️ Restock Alert — ${d.shopName}`;
+      document.getElementById("advisoryBody").value = `Hello ${d.ownerName},\n\nYour low-stock items are: ${d.lowStockList}. Restock soon to protect your ${d.marginPct}% margin.\n\n— The DukaPulse Team`;
+    } else {
+      document.getElementById("advisorySubject").value = `👋 POS Check-In — ${d.shopName}`;
+      document.getElementById("advisoryBody").value = `Hello ${d.ownerName},\n\nWe noticed ${d.receipts7d} receipts synced in the last 7 days. Tap the orange Unsynced badge whenever online to sync offline sales!\n\n— The DukaPulse Team`;
+    }
+  }
+
+  async function sendAdvisoryEmailNow() {
+    const shopId = document.getElementById("advisoryShopSelect").value;
+    const subject = document.getElementById("advisorySubject").value.trim();
+    const messageBody = document.getElementById("advisoryBody").value.trim();
+    if (!shopId || !subject || !messageBody) return alert("Fill all fields.");
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "admin_send_advisory_email", adminKey: activeAdminKey, payload: { shopId, subject, messageBody } })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+      showAdminAlert("✅ " + data.message);
+    } catch (e) { alert("❌ Network error."); }
+  }
+
+  function openAdvisoryWhatsApp() {
+    if (!activeAdvisoryData) return alert("Select a shop first.");
+    const rawPhone = String(activeAdvisoryData.ownerPhone || "").replace(/[^\d]/g, "");
+    if (!rawPhone) return alert("No phone saved.");
+    const intlPhone = rawPhone.startsWith("0") && rawPhone.length === 10 ? "254" + rawPhone.slice(1) : rawPhone;
+    window.open(`https://wa.me/${intlPhone}?text=${encodeURIComponent(document.getElementById("advisoryBody").value.trim())}`, "_blank");
+  }
+
+  // =========================================================================
+  // SHOPKEEPER POS LOGIN, OFFLINE SYNC & CHARTS
+  // =========================================================================
+  function updateNetworkUI() {
+    const badge = document.getElementById("netBadge");
+    badge.textContent = navigator.onLine ? "● ONLINE" : "● OFFLINE MODE";
+    badge.className = navigator.onLine ? "pill pill-online" : "pill pill-offline";
+    updateQueueBadge();
+  }
+
+  function updateQueueBadge() {
+    const queue = getOfflineQueue();
+    const qBadge = document.getElementById("queueBadge");
+    if (queue.length > 0) {
+      qBadge.classList.remove("hidden");
+      qBadge.textContent = isSyncing ? `🔄 Syncing ${queue.length}...` : `⏳ ${queue.length} Unsynced (Tap to Sync)`;
+    } else {
+      qBadge.classList.add("hidden");
+    }
+  }
+
+  function showTab(e, id) {
+    document.querySelectorAll("#appView .panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll("#appView .tab").forEach(t => t.classList.remove("active"));
+    const target = document.getElementById(id);
+    if (target) target.classList.add("active");
+    if (e && e.currentTarget) e.currentTarget.classList.add("active");
+    if (id === "tabAnalytics") renderShopProgressCharts();
+    if (id === "analytics") {
+      renderAnalyticsUI(JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}"));
+      if (navigator.onLine && Date.now() - lastSyncAt > 60000) syncWithServer();
+    }
+  }
+
+  function getStoredAuth() { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)); } catch { return null; } }
+  function getCachedInventory() { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.INVENTORY)) || []; } catch { return []; } }
+  function getOfflineQueue() { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.OFFLINE_QUEUE)) || []; } catch { return []; } }
+  function getSalesHistory() { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.SALES_HISTORY)) || []; } catch { return []; } }
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const loginIdentifier = document.getElementById("loginShopId").value.trim();
+    const password = document.getElementById("loginPin").value; // Exact case & symbols preserved
+    const errEl = document.getElementById("loginError");
+    const btn = document.getElementById("loginBtn");
+
+    errEl.textContent = "";
+    btn.disabled = true;
+    btn.textContent = "Verifying Account...";
+
+    const existingAuth = getStoredAuth();
+    if (!navigator.onLine && existingAuth &&
+        (existingAuth.shopId.toLowerCase() === loginIdentifier.toLowerCase() ||
+         (existingAuth.username && existingAuth.username.toLowerCase() === loginIdentifier.toLowerCase())) &&
+        await verifyLocal(password, existingAuth.verifier)) {
+      showAppFromLocalCache();
+      btn.disabled = false;
+      btn.textContent = "Unlock POS";
+      return;
+    }
+
+    try {
+      const data = await api({ action: "bootstrap", shopId: loginIdentifier, pin: password });
+
+      if (!data.ok) {
+        if (data.locked) {
+          lockedCreds = { shopId: loginIdentifier, pin: password };
+          document.getElementById("lockReasonText").textContent = data.error;
+          showView("lockedView");
+        } else {
+          errEl.textContent = data.error || "Invalid Username/Shop ID or Password.";
+        }
+        return;
+      }
+
+      await finishLogin(data, loginIdentifier, password);
+    } catch (err) {
+      errEl.textContent = "Network error. Connect to internet for first-time login.";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Unlock POS";
+    }
+  }
+
+  function logoutShop() {
+    localStorage.removeItem(STORAGE_KEYS.AUTH);
+    lockedCreds = null;
+    showView("loginView");
+  }
+
+  function showAppFromLocalCache() {
+    const meta = JSON.parse(localStorage.getItem(STORAGE_KEYS.SHOP_META) || "{}");
+    document.getElementById("headerShopName").textContent = `🏪 ${meta.shopName || "DukaPulse"}`;
+    document.getElementById("headerShopMeta").textContent = `ID: ${meta.shopId || "--"} | Valid Until: ${meta.expiryDate || "--"}`;
+    renderInventoryUI(getCachedInventory());
+    renderAnalyticsUI(JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}"));
+    renderShopProgressCharts();
+    updateQueueBadge();
+    showView("appView");
+  }
+
+  async function syncWithServer() {
+    if (!navigator.onLine || isSyncing) return;
+    const auth = getStoredAuth();
+    if (!auth) return;
+    isSyncing = true;
+    updateQueueBadge();
+
+    try {
+      const queue = getOfflineQueue();
+      let data;
+      if (queue.length > 0) {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "sync_sales", shopId: auth.shopId, ...authCreds(auth), payload: { receipts: queue } })
+        });
+        data = await res.json();
+        if (data.ok) { const sent = new Set(queue.map(r => r.receiptId)); localStorage.setItem(STORAGE_KEYS.OFFLINE_QUEUE, JSON.stringify(getOfflineQueue().filter(r => !sent.has(r.receiptId)))); }
+      } else {
+        data = await api({ action: "bootstrap", shopId: auth.shopId, ...authCreds(auth) });
+      }
+
+      if (!data.ok) {
+        if (data.authExpired) { logoutShop(); document.getElementById("loginError").textContent = "Session expired. Please sign in again."; return; }
+        if (data.locked) { document.getElementById("lockReasonText").textContent = data.error; showView("lockedView"); }
+        return;
+      }
+
+      if (data.token) saveToken(data.token);
+      const os = data.result && data.result.oversold;
+      if (os && os.length) alert("⚠️ Sold more than the system had in stock. Please recount:\n\n" + os.map(o => `• ${o.name}: ${o.short} short`).join("\n"));
+      if (data.shop) localStorage.setItem(STORAGE_KEYS.SHOP_META, JSON.stringify(data.shop));
+      if (data.inventory) {
+        const adjustedInv = applyPendingQueueToInventory(data.inventory, getOfflineQueue());
+        localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(adjustedInv));
+        renderInventoryUI(adjustedInv);
+      }
+      if (data.dailyStats) {
+        localStorage.setItem(STORAGE_KEYS.DAILY_STATS, JSON.stringify(data.dailyStats));
+        renderAnalyticsUI(data.dailyStats);
+      }
+      renderShopProgressCharts();
+      lastSyncAt = Date.now();
+      showView("appView");
+    } catch (e) {
+      console.warn("Sync deferred:", e.message);
+    } finally {
+      isSyncing = false;
+      updateQueueBadge();
+    }
+  }
+
+  function applyPendingQueueToInventory(serverInventory, pendingQueue) {
+    if (!pendingQueue.length) return serverInventory;
+    const deducted = {};
+    pendingQueue.forEach(rcp => (rcp.items || []).forEach(line => {
+      deducted[line.itemId] = (deducted[line.itemId] || 0) + Number(line.qty);
+    }));
+    return serverInventory.map(item => {
+      const newStock = Math.max(0, Math.round((item.stock - (deducted[item.itemId] || 0)) * 1000) / 1000);
+      return { ...item, stock: newStock, status: newStock <= item.reorderLevel ? "LOW STOCK" : "IN STOCK" };
+    });
+  }
+
+  // =========================================================================
+  // POS CART, M-PESA STK PUSH, RECEIPTS & INVENTORY
+  // =========================================================================
+  function getSelectedProduct() {
+    const itemId = document.getElementById("saleItemSelect").value;
+    return getCachedInventory().find(i => i.itemId === itemId) || null;
+  }
+  function onProductSelectChange() { document.getElementById("saleQty").value = 1; syncFromQty(); }
+  function setQuickQty(val) { document.getElementById("saleQty").value = val; syncFromQty(); }
+
+  function syncFromQty() {
+    const product = getSelectedProduct();
+    const qty = Number(document.getElementById("saleQty").value);
+    const cashInput = document.getElementById("saleCashAmount");
+    if (!product || isNaN(qty) || qty <= 0) { cashInput.value = ""; return; }
+    cashInput.value = (Math.round(qty * product.sellPrice * 100) / 100).toFixed(2);
+  }
+
+  function syncFromCashAmount() {
+    const product = getSelectedProduct();
+    const cash = Number(document.getElementById("saleCashAmount").value);
+    const qtyInput = document.getElementById("saleQty");
+    if (!product) { alert("Please select a product first."); document.getElementById("saleCashAmount").value = ""; return; }
+    if (isNaN(cash) || cash <= 0 || product.sellPrice <= 0) { qtyInput.value = ""; return; }
+    qtyInput.value = Math.round((cash / product.sellPrice) * 1000) / 1000;
+  }
+
+  function addItemToCart() {
+    const product = getSelectedProduct();
+    const qty = Number(document.getElementById("saleQty").value);
+    if (!product) return alert("Please select a product first.");
+    if (isNaN(qty) || qty <= 0) return alert("Enter a valid quantity.");
+    const existing = cart.find(c => c.itemId === product.itemId);
+    const totalPlannedQty = Math.round(((existing ? existing.qty : 0) + qty) * 1000) / 1000;
+    if (totalPlannedQty > product.stock) return alert(`❌ Only ${product.stock} available for ${product.name}!`);
+    if (existing) existing.qty = totalPlannedQty;
+    else cart.push({ itemId: product.itemId, name: product.name, sellPrice: product.sellPrice, buyPrice: product.buyPrice, qty: Math.round(qty * 1000) / 1000 });
+    document.getElementById("saleItemSelect").value = "";
+    document.getElementById("saleQty").value = 1;
+    document.getElementById("saleCashAmount").value = "";
+    renderCart();
+  }
+
+  function removeFromCart(idx) { cart.splice(idx, 1); renderCart(); }
+  function clearCart() { cart = []; renderCart(); }
+
+  function renderCart() {
+    const tbody = document.getElementById("cartTableBody");
+    const btn = document.getElementById("checkoutBtn");
+    let total = 0;
+    if (!cart.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Cart is empty.</td></tr>`;
+      document.getElementById("cartItemCount").textContent = "0";
+      document.getElementById("cartGrandTotal").textContent = "0.00";
+      btn.disabled = true;
+      return;
+    }
+    tbody.innerHTML = cart.map((item, idx) => {
+      const sub = Math.round(item.sellPrice * item.qty * 100) / 100;
+      total += sub;
+      return `<tr><td><strong>${esc(item.name)}</strong></td><td>${item.sellPrice.toFixed(2)}</td><td>${item.qty}</td><td>${sub.toFixed(2)}</td><td><button type="button" class="btn-remove" onclick="removeFromCart(${idx})">✕</button></td></tr>`;
+    }).join("");
+    document.getElementById("cartItemCount").textContent = cart.length;
+    document.getElementById("cartGrandTotal").textContent = total.toFixed(2);
+    btn.disabled = false;
+  }
+
+  function toggleMpesaPhoneBox() {
+    const mode = document.getElementById("paymentMode").value;
+    const phoneBox = document.getElementById("mpesaCustomerPhoneBox");
+    const btn = document.getElementById("checkoutBtn");
+    if (mode === "MPESA_STK") {
+      phoneBox.style.display = "block";
+      btn.textContent = "📲 Prompt Customer PIN & Complete Sale";
+    } else {
+      phoneBox.style.display = "none";
+      btn.textContent = "✅ Complete Checkout & Print Receipt";
+    }
+  }
+
+  function captureCartForReceipt(paymentLabel) {
+    if (!cart.length) return null;
+    const total = cart.reduce((sum, item) => sum + (Number(item.qty) * Number(item.sellPrice || 0)), 0);
+    return {
+      receiptId: newReceiptId(),
+      dateStr: localDate(),
+      timeStr: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      paymentLabel,
+      total,
+      items: cart.map(i => ({ name: i.name, qty: Number(i.qty), price: Number(i.sellPrice) }))
+    };
+  }
+
+  function showPrintableReceipt(snap) {
+    if (!snap) return;
+    const meta = JSON.parse(localStorage.getItem(STORAGE_KEYS.SHOP_META) || "{}");
+    const itemsHtml = snap.items.map(i => `<div class="receipt-line"><span>${esc(i.name)} x${i.qty}</span><span>${(i.qty * i.price).toFixed(2)}</span></div>`).join("");
+    document.getElementById("receiptPrintArea").innerHTML = `
+      <div style="text-align:center; font-weight:bold; font-size:15px;">${esc(meta.shopName || "DUKAPULSE")}</div>
+      <div style="text-align:center; font-size:11px; margin-bottom:6px;">Shop ID: ${esc(meta.shopId || "--")}</div>
+      <div class="receipt-line"><span>Receipt:</span><span>${snap.receiptId}</span></div>
+      <div class="receipt-line"><span>Date:</span><span>${snap.dateStr} ${snap.timeStr}</span></div>
+      <div class="receipt-line"><span>Payment:</span><span>${snap.paymentLabel}</span></div>
+      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
+      ${itemsHtml}
+      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
+      <div class="receipt-line" style="font-weight:bold; font-size:15px;"><span>TOTAL PAID:</span><span>KES ${snap.total.toFixed(2)}</span></div>
+      <div style="text-align:center; font-size:11px; margin-top:10px;">Thank you for your business!</div>
+      <div style="text-align:center; font-size:10px; margin-top:4px; color:#64748b;">Powered by DukaPulse</div>
+    `;
+    document.getElementById("mpesaWaitingState").classList.add("hidden");
+    document.getElementById("receiptConfirmedState").classList.remove("hidden");
+    document.getElementById("paymentReceiptModal").classList.remove("hidden");
+  }
+
+  async function handleCheckoutSubmit() {
+    if (!cart.length) return;
+    const mode = document.getElementById("paymentMode").value;
+    if (mode !== "MPESA_STK") {
+      const snap = captureCartForReceipt(mode);
+      completeCheckout(snap, mode);
+      showPrintableReceipt(snap);
+      renderShopProgressCharts();
+      return;
+    }
+
+    const phone = document.getElementById("customerMpesaPhone").value.trim();
+    if (!phone) return alert("Enter customer's M-Pesa number.");
+    if (!navigator.onLine) return alert("Internet required for M-Pesa prompt.");
+    const auth = getStoredAuth();
+    const totalAmount = cart.reduce((sum, item) => sum + (Number(item.qty) * Number(item.sellPrice || 0)), 0);
+    const tempReceiptId = "RCP-" + Date.now().toString().slice(-6);
+
+    const btn = document.getElementById("checkoutBtn");
+    btn.disabled = true;
+    btn.textContent = "⏳ Sending M-Pesa Prompt...";
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "mpesa_stk_push", shopId: auth.shopId, ...authCreds(auth), payload: { phone, amount: totalAmount, receiptId: tempReceiptId } })
+      });
+      const data = await res.json();
+      if (!data.ok) { alert("❌ " + data.error); btn.disabled = false; toggleMpesaPhoneBox(); return; }
+
+      activeMpesaCheckoutId = data.stk.checkoutRequestId;
+      document.getElementById("mpesaPromptStatusText").textContent = `Prompt sent to ${data.stk.phone} for KES ${totalAmount.toFixed(2)}. Waiting for PIN...`;
+      document.getElementById("mpesaWaitingState").classList.remove("hidden");
+      document.getElementById("receiptConfirmedState").classList.add("hidden");
+      document.getElementById("paymentReceiptModal").classList.remove("hidden");
+      startMpesaPolling();
+    } catch (e) {
+      alert("❌ Network error sending M-Pesa prompt.");
+      btn.disabled = false;
+      toggleMpesaPhoneBox();
+    }
+  }
+
+  function startMpesaPolling() {
+    clearInterval(mpesaPollTimer);
+    let attempts = 0;
+    mpesaPollTimer = setInterval(async () => {
+      attempts++;
+      if (attempts > 18) { clearInterval(mpesaPollTimer); document.getElementById("mpesaPromptStatusText").textContent = "⏱ No confirmation yet. Tap \"Check Payment Now\" or Cancel."; return; }
+      await checkMpesaNowManual(true);
+    }, 4000);
+  }
+
+  async function checkMpesaNowManual(isSilent) {
+    if (!activeMpesaCheckoutId) return;
+    const auth = getStoredAuth();
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "mpesa_query_status", shopId: auth.shopId, ...authCreds(auth), payload: { checkoutRequestId: activeMpesaCheckoutId } })
+      });
+      const data = await res.json();
+      if (!data.ok) return;
+      if (data.payment.status === "PAID") {
+        clearInterval(mpesaPollTimer);
+        const checkoutId = activeMpesaCheckoutId; activeMpesaCheckoutId = null;
+        if (!checkoutId) return;
+        const refCode = (data.payment.mpesaReceipt || checkoutId.slice(-8)).toUpperCase();
+        const paymentLabel = `M-Pesa (${refCode})`;
+        const snap = captureCartForReceipt(paymentLabel);
+        completeCheckout(snap, "M-Pesa STK", checkoutId);
+        document.getElementById("customerMpesaPhone").value = "";
+        toggleMpesaPhoneBox();
+        showPrintableReceipt(snap);
+        renderShopProgressCharts();
+      } else if (data.payment.status === "FAILED") {
+        clearInterval(mpesaPollTimer);
+        document.getElementById("mpesaPromptStatusText").textContent = "❌ " + data.payment.message;
+        document.getElementById("checkoutBtn").disabled = false;
+        toggleMpesaPhoneBox();
+      } else if (!isSilent) {
+        document.getElementById("mpesaPromptStatusText").textContent = "⏳ " + data.payment.message;
+      }
+    } catch (e) {}
+  }
+
+  function cancelMpesaWait() {
+    clearInterval(mpesaPollTimer);
+    activeMpesaCheckoutId = null;
+    document.getElementById("paymentReceiptModal").classList.add("hidden");
+    document.getElementById("checkoutBtn").disabled = (cart.length === 0);
+    toggleMpesaPhoneBox();
+  }
+
+  function closeReceiptModal() {
+    document.getElementById("paymentReceiptModal").classList.add("hidden");
+    activeMpesaCheckoutId = null;
+  }
+
+  function completeCheckout(snap, paymentModeOverride, checkoutRequestId) {
+    if (!cart.length) return;
+    const now = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const receiptId = (snap && snap.receiptId) || newReceiptId();
+    const paymentMode = paymentModeOverride || document.getElementById("paymentMode").value;
+
+    let grandTotal = 0, totalProfit = 0;
+    cart.forEach(c => { grandTotal += c.sellPrice * c.qty; totalProfit += (c.sellPrice - c.buyPrice) * c.qty; });
+
+    const receiptRecord = {
+      receiptId, date: dateStr, time: timeStr, paymentMode, checkoutRequestId: checkoutRequestId || "",
+      items: cart.map(c => ({ itemId: c.itemId, name: c.name, qty: c.qty, sellPrice: c.sellPrice, buyPrice: c.buyPrice }))
+    };
+
+    const queue = getOfflineQueue();
+    queue.push(receiptRecord);
+    localStorage.setItem(STORAGE_KEYS.OFFLINE_QUEUE, JSON.stringify(queue));
+
+    const hist = getSalesHistory();
+    hist.push(receiptRecord);
+    localStorage.setItem(STORAGE_KEYS.SALES_HISTORY, JSON.stringify(hist.slice(-300)));
+
+    const updatedInv = applyPendingQueueToInventory(getCachedInventory(), [receiptRecord]);
+    localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(updatedInv));
+    renderInventoryUI(updatedInv);
+
+    const stats = JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}");
+    if (!stats.date || stats.date === dateStr) {
+      stats.date = dateStr;
+      stats.revenue = Math.round(((stats.revenue || 0) + grandTotal) * 100) / 100;
+      stats.profit = Math.round(((stats.profit || 0) + totalProfit) * 100) / 100;
+      stats.count = (stats.count || 0) + 1;
+      stats.byPayment = stats.byPayment || {};
+      stats.byPayment[paymentMode] = Math.round(((stats.byPayment[paymentMode] || 0) + grandTotal) * 100) / 100;
+      localStorage.setItem(STORAGE_KEYS.DAILY_STATS, JSON.stringify(stats));
+      renderAnalyticsUI(stats);
+    }
+
+    clearCart();
+    updateQueueBadge();
+    if (navigator.onLine) syncWithServer();
+  }
+
+  function renderInventoryUI(items) {
+    const sel = document.getElementById("saleItemSelect");
+    sel.innerHTML = items.length
+      ? `<option value="">-- Choose Product --</option>` + items.map(i => `<option value="${esc(i.itemId)}">${esc(i.name)} (${i.sellPrice.toFixed(2)} | Stock: ${i.stock})</option>`).join("")
+      : `<option value="">No products yet</option>`;
+
+    const tbody = document.getElementById("inventoryTableBody");
+    tbody.innerHTML = items.length ? items.map(i => `
+      <tr>
+        <td>${esc(i.itemId)}</td><td>${esc(i.name)}</td><td>${i.sellPrice.toFixed(2)}</td><td><strong>${i.stock}</strong></td>
+        <td><span class="${i.stock <= i.reorderLevel ? 'badge-low' : 'badge-ok'}">${esc(i.status)}</span></td>
+        <td><button type="button" class="btn-restock" data-id="${esc(i.itemId)}" data-name="${esc(i.name)}" onclick="promptRestock(this.dataset.id, this.dataset.name)">+ Restock</button></td>
+      </tr>
+    `).join("") : `<tr><td colspan="6" style="text-align:center;">No products added yet.</td></tr>`;
+  }
+
+  async function addNewProduct(e) {
+    e.preventDefault();
+    if (!navigator.onLine) return alert("⚠️ Connect to internet to register new products.");
+    const auth = getStoredAuth();
+    const btn = document.getElementById("addProdBtn");
+    btn.disabled = true;
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "add_product", shopId: auth.shopId, ...authCreds(auth),
+          payload: {
+            name: document.getElementById("prodName").value, category: document.getElementById("prodCat").value,
+            buyPrice: document.getElementById("prodBuy").value, sellPrice: document.getElementById("prodSell").value,
+            stock: document.getElementById("prodStock").value, reorderLevel: document.getElementById("prodReorder").value
+          }
+        })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+      localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(data.inventory));
+      renderInventoryUI(data.inventory);
+      e.target.reset();
+    } catch (err) { alert("❌ Network error."); }
+    finally { btn.disabled = false; }
+  }
+
+  async function promptRestock(itemId, itemName) {
+    if (!navigator.onLine) return alert("⚠️ Connect to internet to restock.");
+    const addQty = Number(prompt(`Add how many units of "${itemName}"?`));
+    if (isNaN(addQty) || addQty <= 0) return;
+    const auth = getStoredAuth();
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "restock_product", shopId: auth.shopId, ...authCreds(auth), payload: { itemId, addQty } })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+      localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(data.inventory));
+      renderInventoryUI(data.inventory);
+    } catch (err) { alert("❌ Network error."); }
+  }
+
+  function renderAnalyticsUI(stats) {
+    document.getElementById("todayDateLabel").textContent = stats.date || "--";
+    document.getElementById("dayRevenue").textContent = (Number(stats.revenue) || 0).toFixed(2);
+    document.getElementById("dayProfit").textContent = (Number(stats.profit) || 0).toFixed(2);
+    document.getElementById("dayTx").textContent = stats.count || 0;
+    document.getElementById("dayTopItem").textContent = stats.topItem || "None";
+    document.getElementById("dayPayments").textContent = Object.entries(stats.byPayment || {}).map(([k, v]) => `${k}: ${Number(v).toFixed(2)}`).join(" | ") || "No sales yet";
+  }
+
+  async function triggerWeeklyReport() {
+    if (!navigator.onLine) return alert("⚠️ Connect to internet.");
+    const auth = getStoredAuth();
+    try {
+      await syncWithServer();
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "weekly_report", shopId: auth.shopId, ...authCreds(auth), payload: {} })
+      });
+      const data = await res.json();
+      if (!data.ok) return alert("❌ " + data.error);
+      const rep = data.result;
+      const box = document.getElementById("weeklyResult");
+      box.style.display = "block";
+      box.innerHTML = `<strong>📅 Weekly Report (${rep.period})</strong><br>• Revenue: <strong>${rep.totalRev.toFixed(2)}</strong><br>• Profit: <strong>${rep.totalProfit.toFixed(2)}</strong><br>• Receipts: <strong>${rep.txCount}</strong>`;
+    } catch (err) { alert("❌ Network error."); }
+  }
+
+  function renderShopProgressCharts() {
+    const history = getSalesHistory();
+    const stats = JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_STATS) || "{}");
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = localDate(new Date(Date.now() - i * 86400000));
+      days.push({ date: d, label: d.slice(5), rev: 0, profit: 0 });
+    }
+    const prodTotals = {};
+    let total7dRev = 0, total7dProfit = 0;
+
+    history.forEach(rcp => {
+      const bucket = days.find(x => x.date === String(rcp.date || "").slice(0, 10));
+      (rcp.items || []).forEach(line => {
+        const rev = (Number(line.qty) || 0) * (Number(line.sellPrice) || 0);
+        const prof = (Number(line.qty) || 0) * ((Number(line.sellPrice) || 0) - (Number(line.buyPrice) || 0));
+        if (bucket) {
+          bucket.rev += rev; bucket.profit += prof;
+          total7dRev += rev; total7dProfit += prof;
+          prodTotals[line.name || line.itemId] = (prodTotals[line.name || line.itemId] || 0) + rev;
+        }
+      });
+    });
+
+    const todayBucket = days[days.length - 1];
+    if (stats.date === todayBucket.date && (Number(stats.revenue) || 0) > todayBucket.rev) {
+      total7dRev += (Number(stats.revenue) - todayBucket.rev);
+      total7dProfit += ((Number(stats.profit) || 0) - todayBucket.profit);
+      todayBucket.rev = Number(stats.revenue) || 0;
+      todayBucket.profit = Number(stats.profit) || 0;
+    }
+
+    const margin = total7dRev > 0 ? ((total7dProfit / total7dRev) * 100).toFixed(1) : "0.0";
+    document.getElementById("chart7dRev").textContent = total7dRev.toFixed(2);
+    document.getElementById("chart7dProfit").textContent = total7dProfit.toFixed(2);
+    document.getElementById("chartMarginPct").textContent = margin + "%";
+
+    const isDark = document.body.classList.contains("dark-mode");
+    const labelColor = isDark ? "#cbd5e1" : "#334155";
+    const gridColor = isDark ? "#334155" : "#e2e8f0";
+
+    const c1 = document.getElementById("salesTrendCanvas");
+    if (c1) {
+      const ctx = c1.getContext("2d");
+      const W = c1.width, H = c1.height;
+      ctx.clearRect(0, 0, W, H);
+      const maxVal = Math.max(100, ...days.map(d => d.rev));
+      const padL = 52, padR = 16, padT = 20, padB = 34, chartW = W - padL - padR, chartH = H - padT - padB, slotW = chartW / days.length;
+      ctx.strokeStyle = gridColor; ctx.fillStyle = labelColor; ctx.font = "11px sans-serif";
+      for (let g = 0; g <= 4; g++) {
+        const y = padT + (chartH * g) / 4;
+        ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+        ctx.fillText(Math.round(maxVal * (1 - g / 4)).toString(), 6, y + 4);
+      }
+      days.forEach((d, idx) => {
+        const xCenter = padL + slotW * idx + slotW / 2;
+        const revH = (d.rev / maxVal) * chartH, profH = (Math.max(0, d.profit) / maxVal) * chartH;
+        ctx.fillStyle = "#2563eb"; ctx.fillRect(xCenter - 16, padT + chartH - revH, 14, revH);
+        ctx.fillStyle = "#059669"; ctx.fillRect(xCenter + 2, padT + chartH - profH, 14, profH);
+        ctx.fillStyle = labelColor; ctx.textAlign = "center"; ctx.fillText(d.label, xCenter, H - 12);
+      });
+      ctx.textAlign = "left";
+    }
+
+    const c2 = document.getElementById("topProductsCanvas");
+    if (c2) {
+      const ctx = c2.getContext("2d");
+      const W = c2.width, H = c2.height;
+      ctx.clearRect(0, 0, W, H);
+      const sorted = Object.entries(prodTotals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      if (!sorted.length) {
+        ctx.fillStyle = labelColor; ctx.font = "13px sans-serif";
+        ctx.fillText("Record sales to visualize top-selling products.", 20, H / 2);
+        return;
+      }
+      const maxRev = Math.max(1, sorted[0][1]);
+      sorted.forEach(([name, rev], idx) => {
+        const y = 18 + idx * 36;
+        const barW = ((W - 220) * rev) / maxRev;
+        ctx.fillStyle = labelColor; ctx.font = "bold 12px sans-serif"; ctx.fillText(name.slice(0, 20), 10, y + 15);
+        ctx.fillStyle = "#0ea5e9"; ctx.fillRect(150, y, Math.max(4, barW), 20);
+        ctx.fillStyle = labelColor; ctx.font = "12px sans-serif"; ctx.fillText("KES " + rev.toFixed(0), 156 + Math.max(4, barW), y + 15);
+      });
+    }
+  }
+</script>
+</body>
+</html>
