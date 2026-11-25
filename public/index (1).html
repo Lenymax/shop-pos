@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-title" content="DukaPulse">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>DukaPulse</title>
+  <link rel="manifest" href="./manifest.json">
+  <style>
+    :root {
+      --bg-body: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-subtle: #f8fafc;
+      --bg-tabs: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #cbd5e1;
+      --border-light: #e2e8f0;
+      --header-bg: #0f172a;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-soft: #dbeafe;
+      --accent-soft-text: #1e40af;
+      --success: #059669;
+      --success-hover: #047857;
+    }
+
+    body.dark-mode {
+      --bg-body: #090d16;
+      --bg-card: #111827;
+      --bg-subtle: #1f2937;
+      --bg-tabs: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      --border-light: #1e293b;
+      --header-bg: #030712;
+      --accent-soft: rgba(59, 130, 246, 0.2);
+      --accent-soft-text: #93c5fd;
+    }
+
+    /* Thematic Accent Palettes */
+    body[data-theme="emerald"] { --accent: #059669; --accent-hover: #047857; --accent-soft: #d1fae5; --accent-soft-text: #065f46; }
+    body[data-theme="purple"]  { --accent: #7c3aed; --accent-hover: #6d28d9; --accent-soft: #ede9fe; --accent-soft-text: #5b21b6; }
+    body[data-theme="amber"]   { --accent: #d97706; --accent-hover: #b45309; --accent-soft: #fef3c7; --accent-soft-text: #92400e; }
+    body[data-theme="crimson"] { --accent: #dc2626; --accent-hover: #b91c1c; --accent-soft: #fee2e2; --accent-soft-text: #991b1b; }
+
+    * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
+    body { background: var(--bg-body); padding: 12px; color: var(--text-main); transition: background 0.2s, color 0.2s; }
+    .container { max-width: 900px; margin: auto; background: var(--bg-card); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); overflow: hidden; }
+
+    /* Top Theme & Install Strip */
+    .theme-toolbar { max-width: 900px; margin: 0 auto 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding: 6px 10px; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border-light); }
+    .swatch-group { display: flex; align-items: center; gap: 6px; }
+    .swatch { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--border-color); cursor: pointer; }
+    .swatch.active { transform: scale(1.2); box-shadow: 0 0 0 2px var(--text-main); }
+    .theme-btn { background: var(--bg-subtle); color: var(--text-main); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .install-btn { background: var(--accent); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; }
+
+    /* Header & Connection Pill */
+    .header { background: var(--header-bg); color: #fff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 3px solid var(--accent); }
+    .header h2 { font-size: 18px; }
+    .shop-meta { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+    .status-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .pill { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .pill-online { background: #065f46; color: #d1fae5; }
+    .pill-offline { background: #991b1b; color: #fee2e2; }
+    .pill-queue { background: #92400e; color: #fef3c7; cursor: pointer; border: none; }
+    .btn-logout { background: #334155; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+
+    /* Login, Admin Auth & Lock Screens */
+    .auth-box { max-width: 410px; margin: 25px auto; background: var(--bg-card); padding: 28px; border-radius: 12px; box-shadow: 0 6px 25px rgba(0,0,0,0.12); border: 1px solid var(--border-light); }
+    .auth-box h2 { margin-bottom: 6px; text-align: center; }
+    .auth-box p { font-size: 13px; color: var(--text-muted); text-align: center; margin-bottom: 20px; }
+    .pw-wrap { position: relative; }
+    .pw-toggle { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); font-size: 12px; font-weight: 700; cursor: pointer; }
+    .admin-link-row { text-align: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-light); display: flex; flex-direction: column; gap: 10px; }
+    .link-btn { background: none; border: none; color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; }
+    .lock-banner { background: #fef2f2; border: 2px solid #f87171; color: #991b1b; padding: 20px; border-radius: 10px; text-align: center; margin: 20px; }
+
+    /* Navigation Tabs */
+    .tabs { display: flex; background: var(--bg-tabs); }
+    .tab { flex: 1; padding: 14px 8px; border: none; background: none; font-weight: 600; cursor: pointer; color: var(--text-muted); font-size: 13px; }
+    .tab.active { background: var(--bg-card); color: var(--accent); border-bottom: 3px solid var(--accent); }
+    .panel { display: none; padding: 20px; }
+    .panel.active { display: block; }
+
+    /* Forms & Inputs */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .pos-entry-box { background: var(--bg-subtle); border: 1.5px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 18px; }
+    .grid-qty-amount { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; margin-top: 12px; }
+    label { display: block; font-size: 11px; font-weight: 700; margin-bottom: 5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--bg-card); color: var(--text-main); font-family: inherit; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+    /* Admin Toolbar */
+    .admin-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin: 16px 0 10px; }
+    .admin-search-input { flex: 1; min-width: 210px; padding: 9px 12px; border: 1.5px solid var(--border-color); border-radius: 6px; font-size: 13px; }
+    .filter-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .filter-pill { padding: 6px 11px; border: 1.5px solid var(--border-color); background: var(--bg-subtle); color: var(--text-main); border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .filter-pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* Buttons */
+    .btn { width: 100%; padding: 13px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 8px; font-size: 15px; }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:disabled { background: #64748b; cursor: not-allowed; }
+    .btn-green { background: var(--success); }
+    .btn-green:hover { background: var(--success-hover); }
+    .btn-dark { background: #1e293b; }
+    .btn-add-cart { padding: 10px 18px; background: var(--accent); color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; height: 42px; white-space: nowrap; }
+    .btn-qty { flex: 1; padding: 5px 4px; background: var(--bg-tabs); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .btn-remove { padding: 4px 9px; background: #fee2e2; color: #b91c1c; border: none; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .btn-restock { padding: 6px 12px; background: var(--accent); color: #fff; border: none; border-radius: 5px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-sm { padding: 5px 9px; border: none; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; margin-right: 4px; margin-bottom: 4px; }
+    .btn-sm-blue { background: var(--accent-soft); color: var(--accent-soft-text); }
+    .btn-sm-green { background: #d1fae5; color: #065f46; }
+    .btn-sm-red { background: #fee2e2; color: #991b1b; }
+
+    /* Cart & Tables */
+    .cart-box { border: 1.5px solid var(--border-light); border-radius: 8px; padding: 15px; background: var(--bg-subtle); margin-bottom: 18px; overflow-x: auto; }
+    .cart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .clear-cart-link { font-size: 12px; color: #ef4444; cursor: pointer; text-decoration: underline; background: none; border: none; }
+    .summary-box { background: var(--bg-subtle); border: 1.5px solid var(--accent); padding: 12px; border-radius: 6px; text-align: center; }
+    .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    .card { background: var(--bg-subtle); border: 1px solid var(--border-light); padding: 15px; border-radius: 8px; text-align: center; }
+    .card h4 { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+    .card p { font-size: 20px; font-weight: 700; color: var(--text-main); margin-top: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; background: var(--bg-card); }
+    th, td { padding: 10px; border-bottom: 1px solid var(--border-light); text-align: left; }
+    th { background: var(--bg-subtle); }
+    .badge-low { background: #fee2e2; color: #b91c1c; padding: 3px 8px; border-radius: 12px; font-weight: 700; font-size: 11px; }
+    .badge-ok { background: #d1fae5; color: #065f46; padding: 3px 8px; border-radius: 12px; font-weight: 700; font-size: 11px; }
+    .alert { padding: 12px; border-radius: 6px; margin-bottom: 15px; display: none; font-size: 14px; }
+    .alert.show { display: block; background: var(--accent-soft); color: var(--accent-soft-text); }
+    .helper-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .hidden { display: none !important; }
+    @media(max-width:650px){ .grid-2, .grid-3, .grid-qty-amount, .stat-cards { grid-template-columns: 1fr; } }
+
+    /* Modal & Receipt */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }
+    .modal-card { background: var(--bg-card); color: var(--text-main); border-radius: 12px; max-width: 420px; width: 100%; padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.35); border: 1px solid var(--border-color); }
+    .receipt-paper { background: #fff; border: 1px dashed #94a3b8; padding: 16px; font-family: 'Courier New', monospace; font-size: 13px; color: #0f172a; line-height: 1.45; }
+    .receipt-line { display: flex; justify-content: space-between; }
+    .chart-box { background: var(--bg-subtle); border: 1px solid var(--border-light); border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+    canvas.pos-chart { width: 100%; height: 220px; display: block; }
+
+    @media print {
+      body * { visibility: hidden !important; }
+      #receiptPrintArea, #receiptPrintArea * { visibility: visible !important; }
+      #receiptPrintArea { position: fixed; left: 0; top: 0; width: 80mm; border: none; padding: 4mm; }
+    }
+    /* ===== DukaPulse 2.0 shop UI (Offline-Shop style) ===== */
+    .dp-app{max-width:520px;margin:0 auto;min-height:100vh;background:var(--bg-body);color:var(--text-main);position:relative}
+    .dp-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--header-bg);color:#fff;position:sticky;top:0;z-index:20}
+    .dp-hdr h1{font-size:18px;margin:0}.dp-small{font-size:12px;opacity:.7}
+    .dp-icon{background:transparent;border:0;color:#fff;font-size:20px;position:relative;cursor:pointer;min-width:40px}
+    #netDot{font-size:11px;color:#22c55e}#netDot.off{color:#ef4444}
+    #qCount{position:absolute;top:-6px;right:-4px;background:#ff5722;border-radius:10px;font-size:10px;padding:1px 5px}
+    .dp-page{display:none;padding:14px 14px 90px}.dp-page.active{display:block}
+    .dp-card,.dp-item,.dp-stat{background:var(--bg-card);border:1px solid var(--border-light);border-radius:14px}
+    .dp-card{padding:14px;margin-bottom:14px}
+    .dp-qa{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+    .dp-qa button{background:var(--bg-subtle);border:1px solid var(--border-color);border-radius:12px;padding:12px 4px;font-size:22px;color:var(--text-main);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+    .dp-qa button span{font-size:12px;font-weight:600}.dp-qa .hot{background:#ff5722;color:#fff;border-color:#ff5722}
+    .dp-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+    .dp-stat{padding:16px}.dp-stat b{display:block;font-size:20px}.dp-stat span{font-size:12px;color:var(--text-muted)}
+    .dp-stat.g{border-color:#16a34a}.dp-stat.g b{color:#16a34a}.dp-stat.r{border-color:#dc2626}.dp-stat.r b{color:#dc2626}
+    .dp-stat.b{border-color:#2563eb}.dp-stat.b b{color:#2563eb}.dp-stat.o{border-color:#d97706}.dp-stat.o b{color:#d97706}
+    .dp-page h3,.dp-subbody h3{margin:16px 2px 8px;font-size:15px;display:flex;justify-content:space-between}.dp-page h3 a{color:var(--accent);font-size:13px;cursor:pointer}
+    .dp-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;margin-bottom:8px}
+    .dp-item small{display:block;color:var(--text-muted);font-size:12px;margin-top:2px}
+    .dp-in{width:100%;padding:12px;border:1px solid var(--border-color);border-radius:10px;background:var(--bg-card);color:var(--text-main);font-size:15px;margin:4px 0 10px}
+    .dp-chips{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+    .dp-chip{border:1px solid var(--border-color);background:transparent;color:var(--text-main);border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer}
+    .dp-chip.on{background:#ff5722;border-color:#ff5722;color:#fff}
+    .dp-btn{width:100%;padding:14px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+    .dp-btn:disabled{opacity:.5}.dp-btn.alt{background:transparent;color:var(--accent);border:1px solid var(--accent);margin-bottom:10px}
+    .dp-btn.red{background:#dc2626}.dp-foot{position:sticky;bottom:64px;background:var(--bg-body);padding:10px 0}
+    .dp-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;display:flex;background:var(--bg-card);border-top:1px solid var(--border-color);z-index:30}
+    .dp-nav button{flex:1;background:none;border:0;padding:8px 0;color:var(--text-muted);font-size:12px;cursor:pointer}
+    .dp-nav i{display:block;font-style:normal;font-size:20px}.dp-nav button.active{color:var(--accent);font-weight:700}
+    .dp-subpage{position:fixed;inset:0;max-width:520px;margin:0 auto;background:var(--bg-body);z-index:40;overflow-y:auto}
+    .dp-subbody{padding:14px 14px 40px}
+    .dp-sheet{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+    .dp-sheet.hidden{display:none}#sheetBody{background:var(--bg-card);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:14px}
+    .dp-sheet button{display:block;width:100%;text-align:left;padding:14px;border:0;background:none;color:var(--text-main);font-size:16px;border-bottom:1px solid var(--border-light);cursor:pointer}
+    .dp-qty{display:flex;align-items:center;gap:10px}.dp-qty button{width:34px;height:34px;border-radius:50%;border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:20px;cursor:pointer}
+    .dp-qty button.plus{background:var(--accent);color:#fff}.dp-qty b{min-width:22px;text-align:center}
+    .dp-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0}.dp-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .dp-set{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px solid var(--border-light);cursor:pointer}.dp-set:last-child{border:0}
+    .dp-set span.r{margin-left:auto;color:var(--text-muted);font-size:13px}.dp-set .ic{font-size:20px;width:34px;text-align:center}
+    .dp-tag{background:#16a34a;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px}
+    .dp-lock{position:fixed;inset:0;z-index:100;background:var(--bg-body);color:var(--text-main);display:flex;align-items:center;justify-content:center;text-align:center;padding:30px}.dp-lock.hidden{display:none}
+    .dp-demo{background:#fef3c7;color:#92400e;padding:8px 14px;font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center;position:sticky;top:56px;z-index:19}.dp-demo.hidden{display:none}.dp-demo button{border:0;background:#92400e;color:#fff;border-radius:8px;padding:4px 12px}
+    .dp-banner{background:#fee2e2;border:1px solid #fca5a5;color:#b91c1c;border-radius:14px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+    .dp-form label{font-size:13px;font-weight:600}.dp-empty{text-align:center;color:var(--text-muted);padding:40px 10px}
+  </style>
+</head>
+<body>
+
+<div id="loginView" class="auth-box">
+  <h2>🏪 DukaPulse</h2>
+  <p>Sign in with your Shop Username (or ID) and Password</p>
+  <form onsubmit="handleLogin(event)">
+    <div style="margin-bottom:14px;">
+      <label>Username or Shop ID</label>
+      <input type="text" id="loginShopId" placeholder="e.g. kangaru_mart or SHOP-101" autocomplete="username" required>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label>Password (Letters, Numbers & Symbols)</label>
+      <div class="pw-wrap">
+        <input type="password" id="loginPin" placeholder="Enter your password" autocomplete="current-password" required>
+        <button type="button" class="pw-toggle" onclick="togglePasswordVisibility('loginPin', this)">Show</button>
+      </div>
+    </div>
+    <button type="submit" id="loginBtn" class="btn">Unlock POS</button>
+    <p id="loginError" style="color:#ef4444; margin-top:12px; font-weight:600;"></p>
+  </form>
+</div>
+
+<div id="lockedView" class="container hidden">
+  <div class="header">
+    <h2>🏪 DukaPulse</h2>
+    <button class="btn-logout" onclick="logoutShop()">Switch Shop</button>
+  </div>
+  <div class="lock-banner">
+    <h3>🔒 Account Suspended or Expired</h3>
+    <p id="lockReasonText" style="margin:12px 0; font-size:14px;"></p>
+    <p style="font-size:13px; color:#7f1d1d;">Please contact your system provider to renew your maintenance plan, then tap Retry below.</p>
+    <button class="btn" style="max-width:220px; margin:15px auto 0;" onclick="retryLocked()">🔄 Retry Connection</button>
+  </div>
+</div>
+
+<div id="appView" class="dp-app hidden">
+ <header class="dp-hdr"><div><div class="dp-small" id="hdrGreet"></div><h1 id="hdrTitle">DukaPulse</h1></div><button id="syncBtn" class="dp-icon" onclick="syncWithServer()"><span id="netDot">●</span> ↻<b id="qCount" class="hidden"></b></button></header>
+ <div id="demoBar" class="dp-demo hidden">🧪 Demo mode: sample data, nothing is saved to your shop <button onclick="exitDemo()">Exit</button></div>
+ <main>
+  <section id="pgHome" class="dp-page active"></section>
+  <section id="pgSales" class="dp-page"></section>
+  <section id="pgInv" class="dp-page">
+    <input id="invSearch" class="dp-in" placeholder="🔍 Search products by name or ID" oninput="renderInv()">
+    <div class="dp-chips"><select id="invCat" class="dp-chip" onchange="renderInv()"></select><button id="lowChip" class="dp-chip" onclick="lowOnly=!lowOnly;renderInv()">Low Stock</button></div>
+    <div id="invList"></div>
+    <div class="dp-foot"><button class="dp-btn" onclick="openSub('product')">＋ Add Product</button></div>
+  </section>
+  <section id="pgSet" class="dp-page"></section>
+ </main>
+ <nav class="dp-nav">
+  <button data-t="home" class="active" onclick="setTab('home')"><i>▦</i>Home</button>
+  <button data-t="sales" onclick="setTab('sales')"><i>🛍</i>Sales</button>
+  <button data-t="inv" onclick="setTab('inv')"><i>📦</i>Inventory</button>
+  <button data-t="set" onclick="setTab('set')"><i>⚙</i>Settings</button>
+ </nav>
+ <div id="sub" class="dp-subpage hidden"><header class="dp-hdr"><button class="dp-icon" onclick="closeSub()">←</button><h1 id="subTitle"></h1><span style="width:40px"></span></header><div id="subBody" class="dp-subbody"></div></div>
+ <div id="sheet" class="dp-sheet hidden" onclick="if(event.target===this)this.classList.add('hidden')"><div id="sheetBody"></div></div>
+</div>
+
+<div id="lockOverlay" class="dp-lock hidden"><div><h2>🔒 DukaPulse Locked</h2><p style="margin:10px 0 18px">Use your fingerprint or face to unlock</p><button class="dp-btn" onclick="unlockBio()">Unlock</button><p style="margin-top:16px"><a style="cursor:pointer;text-decoration:underline" onclick="if(confirm('Log out? Unsynced sales stay on this phone.')){$('lockOverlay').classList.add('hidden');logoutShop()}">Use password instead</a></p></div></div>
+
+<div id="paymentReceiptModal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <div id="mpesaWaitingState">
+      <h3 style="margin-bottom:8px;">📲 Waiting for Customer PIN...</h3>
+      <p id="mpesaPromptStatusText" style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">
+        An M-Pesa prompt has been sent to the customer's phone. Ask them to enter their M-Pesa PIN.
+      </p>
+      <div style="display:flex; gap:8px;">
+        <button type="button" class="btn btn-dark" onclick="checkMpesaNowManual(false)">🔄 Check Payment Now</button>
+        <button type="button" class="btn-sm btn-sm-red" style="padding:10px 14px;" onclick="cancelMpesaWait()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="receiptConfirmedState" class="hidden">
+      <div style="text-align:center; color:#059669; font-weight:700; margin-bottom:10px;">
+        ✅ Payment Confirmed & Stock Updated!
+      </div>
+      <div id="receiptPrintArea" class="receipt-paper"></div>
+      <div class="grid-2" style="margin-top:14px;">
+        <button type="button" class="btn btn-dark" onclick="window.print()">🖨️ Print Receipt</button>
+        <button type="button" class="btn btn-green" onclick="closeReceiptModal()">Done / Next Sale</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbyM0xc0JwL1UNwBn1IICSH5TxiZLDDPamnQE_ecTzi-jlXTrHqWolSS7i8qYyq21J7j/exec";
+  const STORAGE_KEYS = {
+    AUTH: "pos_tenant_auth",
+    SHOP_META: "pos_tenant_meta",
+    INVENTORY: "pos_tenant_inventory",
+    DAILY_STATS: "pos_tenant_daily_stats",
+    OFFLINE_QUEUE: "pos_offline_receipt_queue",
+    SALES_HISTORY: "pos_tenant_sales_history",
+    DARK_MODE: "pos_ui_dark_mode",
+    COLOR_THEME: "pos_ui_color_theme"
+  };
+  let lockedCreds = null;
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const newReceiptId = () => "RCP-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
+  const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  const authCreds = a => a.token ? { token: a.token } : { pin: a.pin };
+  async function pbkdf2(pw, salt, iter) {
+    const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveBits"]);
+    return b64(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: iter }, k, 256));
+  }
+  async function makeLocalVerifier(pw) {
+    const salt = crypto.getRandomValues(new Uint8Array(16)), iter = 150000;
+    return { salt: b64(salt), iter, hash: await pbkdf2(pw, salt, iter) };
+  }
+  async function verifyLocal(pw, v) {
+    if (!v || !v.salt) return false;
+    return (await pbkdf2(pw, Uint8Array.from(atob(v.salt), c => c.charCodeAt(0)), v.iter)) === v.hash;
+  }
+  function saveToken(t) {
+    const a = getStoredAuth();
+    if (a && t) { a.token = t; delete a.pin; localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(a)); }
+  }
+  async function migrateLegacyAuth() {   // upgrades phones that still hold a stored password
+    const a = getStoredAuth();
+    if (!a || !a.pin || a.token || !navigator.onLine) return;
+    try {
+      const d = await api({ action: "bootstrap", shopId: a.shopId, pin: a.pin });
+      if (d.ok && d.token) { a.token = d.token; a.verifier = await makeLocalVerifier(a.pin); delete a.pin; localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(a)); }
+    } catch (e) {}
+  }
+  async function finishLogin(data, identifier, password) {
+    const verifier = await makeLocalVerifier(password);
+    applyShopKeys(data.shop.shopId || identifier.toUpperCase()); migrateLegacy();
+    localStorage.removeItem("pos_demo"); cart = {}; discountSpec = null; pendingSale = null;
+    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify({
+      shopId: data.shop.shopId || identifier.toUpperCase(), username: data.shop.username || identifier, token: data.token, verifier
+    }));
+    localStorage.setItem(STORAGE_KEYS.SHOP_META, JSON.stringify(data.shop));
+    localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(data.inventory || []));
+    localStorage.setItem(STORAGE_KEYS.DAILY_STATS, JSON.stringify(data.dailyStats || {}));
+    showAppFromLocalCache();
+  }
+  async function retryLocked() {
+    if (!lockedCreds) return syncWithServer();
+    try {
+      const d = await api({ action: "bootstrap", shopId: lockedCreds.shopId, pin: lockedCreds.pin });
+      if (d.ok) { const c = lockedCreds; lockedCreds = null; await finishLogin(d, c.shopId, c.pin); }
+      else document.getElementById("lockReasonText").textContent = d.error;
+    } catch (e) { alert("❌ Network error."); }
+  }
+  async function api(body) {
+    const res = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) });
+    return res.json();
+  }
+  async function handleLogin(e) {
+    e.preventDefault();
+    const loginIdentifier = document.getElementById("loginShopId").value.trim();
+    const password = document.getElementById("loginPin").value; // Exact case & symbols preserved
+    const errEl = document.getElementById("loginError");
+    const btn = document.getElementById("loginBtn");
+
+    errEl.textContent = "";
+    btn.disabled = true;
+    btn.textContent = "Verifying Account...";
+
+    const existingAuth = getStoredAuth();
+    if (!navigator.onLine && existingAuth &&
+        (existingAuth.shopId.toLowerCase() === loginIdentifier.toLowerCase() ||
+         (existingAuth.username && existingAuth.username.toLowerCase() === loginIdentifier.toLowerCase())) &&
+        await verifyLocal(password, existingAuth.verifier)) {
+      showAppFromLocalCache();
+      btn.disabled = false;
+      btn.textContent = "Unlock POS";
+      return;
+    }
+
+    try {
+      const data = await api({ action: "bootstrap", shopId: loginIdentifier, pin: password });
+
+      if (!data.ok) {
+        if (data.locked) {
+          lockedCreds = { shopId: loginIdentifier, pin: password };
+          document.getElementById("lockReasonText").textContent = data.error;
+          showView("lockedView");
+        } else {
+          errEl.textContent = data.error || "Invalid Username/Shop ID or Password.";
+        }
+        return;
+      }
+
+      await finishLogin(data, loginIdentifier, password);
+    } catch (err) {
+      errEl.textContent = "Network error. Connect to internet for first-time login.";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Unlock POS";
+    }
+  }
+  function logoutShop() {
+    localStorage.removeItem(STORAGE_KEYS.AUTH);
+    lockedCreds = null;
+    showView("loginView");
+  }
+  function getStoredAuth() { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH)); } catch { return null; } }
+  function getCachedInventory() { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.INVENTORY)) || []; } catch { return []; } }
+  function getOfflineQueue() { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.OFFLINE_QUEUE)) || []; } catch { return []; } }
+  function getSalesHistory() { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.SALES_HISTORY)) || []; } catch { return []; } }
+  function applyPendingQueueToInventory(serverInventory, pendingQueue) {
+    if (!pendingQueue.length) return serverInventory;
+    const deducted = {};
+    pendingQueue.forEach(rcp => (rcp.items || []).forEach(line => {
+      deducted[line.itemId] = (deducted[line.itemId] || 0) + Number(line.qty);
+    }));
+    return serverInventory.map(item => {
+      const newStock = Math.max(0, Math.round((item.stock - (deducted[item.itemId] || 0)) * 1000) / 1000);
+      return { ...item, stock: newStock, status: newStock <= item.reorderLevel ? "LOW STOCK" : "IN STOCK" };
+    });
+  }
+  async function syncWithServer() {
+    if (isDemo()) return;
+    if (!navigator.onLine || isSyncing) return;
+    const auth = getStoredAuth();
+    if (!auth) return;
+    isSyncing = true;
+    updateQueueBadge();
+    const syncShop = curShop;
+
+    try {
+      const queue = getOfflineQueue();
+      let data;
+      if (queue.length > 0) {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "sync_sales", shopId: auth.shopId, ...authCreds(auth), payload: { receipts: queue } })
+        });
+        data = await res.json();
+        if (syncShop !== curShop) return;
+        if (data.ok) { const sent = new Set(queue.map(r => r.receiptId)); localStorage.setItem(STORAGE_KEYS.OFFLINE_QUEUE, JSON.stringify(getOfflineQueue().filter(r => !sent.has(r.receiptId)))); }
+      } else {
+        data = await api({ action: "bootstrap", shopId: auth.shopId, ...authCreds(auth) });
+      }
+
+      if (syncShop !== curShop) return;
+      if (!data.ok) {
+        if (data.authExpired) { logoutShop(); document.getElementById("loginError").textContent = "Session expired. Please sign in again."; return; }
+        if (data.locked) { document.getElementById("lockReasonText").textContent = data.error; showView("lockedView"); }
+        return;
+      }
+
+      if (data.token) saveToken(data.token);
+      const os = data.result && data.result.oversold;
+      if (os && os.length) alert("⚠️ Sold more than the system had in stock. Please recount:\n\n" + os.map(o => `• ${o.name}: ${o.short} short`).join("\n"));
+      if (data.shop) localStorage.setItem(STORAGE_KEYS.SHOP_META, JSON.stringify(data.shop));
+      if (data.inventory) {
+        const adjustedInv = applyPendingQueueToInventory(data.inventory, getOfflineQueue());
+        localStorage.setItem(STORAGE_KEYS.INVENTORY, JSON.stringify(adjustedInv));
+        renderInventoryUI(adjustedInv);
+      }
+      if (data.dailyStats) {
+        localStorage.setItem(STORAGE_KEYS.DAILY_STATS, JSON.stringify(data.dailyStats));
+        renderAnalyticsUI(data.dailyStats);
+      }
+      renderShopProgressCharts();
+      lastSyncAt = Date.now();
+      autoBackupMaybe();
+      showView("appView");
+    } catch (e) {
+      console.warn("Sync deferred:", e.message);
+    } finally {
+      isSyncing = false;
+      updateQueueBadge();
+    }
+  }
+  function startMpesaPolling() {
+    clearInterval(mpesaPollTimer);
+    let attempts = 0;
+    mpesaPollTimer = setInterval(async () => {
+      attempts++;
+      if (attempts > 18) { clearInterval(mpesaPollTimer); document.getElementById("mpesaPromptStatusText").textContent = "⏱ No confirmation yet. Tap \"Check Payment Now\" or Cancel."; return; }
+      await checkMpesaNowManual(true);
+    }, 4000);
+  }
+  function showPrintableReceipt(snap) {
+    if (!snap) return;
+    const meta = JSON.parse(localStorage.getItem(STORAGE_KEYS.SHOP_META) || "{}");
+    const itemsHtml = snap.items.map(i => `<div class="receipt-line"><span>${esc(i.name)} x${i.qty}</span><span>${(i.qty * i.price).toFixed(2)}</span></div>`).join("");
+    document.getElementById("receiptPrintArea").innerHTML = `
+      <div style="text-align:center; font-weight:bold; font-size:15px;">${esc(meta.shopName || "DUKAPULSE")}</div>
+      <div style="text-align:center; font-size:11px; margin-bottom:6px;">Shop ID: ${esc(meta.shopId || "--")}</div>
+      <div class="receipt-line"><span>Receipt:</span><span>${snap.receiptId}</span></div>
+      <div class="receipt-line"><span>Date:</span><span>${snap.dateStr} ${snap.timeStr}</span></div>
+      <div class="receipt-line"><span>Payment:</span><span>${snap.paymentLabel}</span></div>
+      ${snap.customer ? `<div class="receipt-line"><span>Customer:</span><span>${esc(snap.customer)}</span></div>` : ""}
+      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
+      ${itemsHtml}
+      <hr style="border:none; border-top:1px dashed #64748b; margin:8px 0;">
+      <div class="receipt-line" style="font-weight:bold; font-size:15px;"><span>TOTAL PAID:</span><span>KES ${snap.total.toFixed(2)}</span></div>
+      <div style="text-align:center; font-size:11px; margin-top:10px;">Thank you for your business!</div>
+      <div style="text-align:center; font-size:10px; margin-top:4px; color:#64748b;">Powered by DukaPulse</div>
+    `;
+    document.getElementById("mpesaWaitingState").classList.add("hidden");
+    document.getElementById("receiptConfirmedState").classList.remove("hidden");
+    document.getElementById("paymentReceiptModal").classList.remove("hidden");
+  }
+  function togglePasswordVisibility(inputId, btnEl) {
+    const inp = document.getElementById(inputId);
+    if (!inp) return;
+    if (inp.type === "password") {
+      inp.type = "text";
+      btnEl.textContent = "Hide";
+    } else {
+      inp.type = "password";
+      btnEl.textContent = "Show";
+    }
+  }
+
+  const K = STORAGE_KEYS;
+  K.SETTINGS = "pos_settings"; K.CUSTOMERS = "pos_customers"; K.CATS = "pos_extra_cats"; K.SHOP_EXTRA = "pos_shop_extra";
+  let cart = {}, discountSpec = null, pendingSale = null, cur = null, lowOnly = false, rp = "today";
+  let isSyncing = false, lastSyncAt = 0, activeMpesaCheckoutId = null, mpesaPollTimer = null;
+  const $ = id => document.getElementById(id);
+  const store = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+  const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+  const settings = () => ({ currency: "KSh", theme: "system", track: true, ...store(K.SETTINGS, {}) });
+  const money = n => settings().currency + " " + (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const r2 = x => Math.round(x * 100) / 100;
+  const isLow = i => i.stock <= i.reorderLevel;
+  const rSum = r => r.items.reduce((s, i) => s + i.qty * i.sellPrice, 0);
+  const payLabel = m => m === "M-Pesa STK" ? "M-Pesa" : m;
+  const cats = () => [...new Set(["General", ...store(K.CATS, []), ...getCachedInventory().map(i => i.category).filter(Boolean)])];
+  const TITLES = { sale: "Record Sale", product: "Product", categories: "Categories", customers: "Customers", shop: "Shop Details", reports: "Reports & Analytics", subscription: "Subscription", backup: "Backup & Restore", export: "Export Data", bulk: "Bulk Upload", currency: "Currency", theme: "Theme" };
+
+  function applyTheme() {
+    const t = settings().theme;
+    document.body.classList.toggle("dark-mode", t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches));
+  }
+  function showView(id) { ["loginView", "lockedView", "appView"].forEach(v => $(v).classList.toggle("hidden", v !== id)); window.scrollTo(0, 0); }
+  function showAppFromLocalCache() { applyTheme(); showView("appView"); renderAll(); }
+  // shims used by the shared sync code
+  const renderInventoryUI = () => renderAll(), renderAnalyticsUI = () => renderAll(), renderShopProgressCharts = () => {};
+  function updateNetworkUI() { const d = $("netDot"); if (d) d.classList.toggle("off", !navigator.onLine); renderBadge(); }
+  function updateQueueBadge() { renderBadge(); }
+  function renderBadge() {
+    const q = $("qCount"), n = getOfflineQueue().length; if ($("demoBar")) $("demoBar").classList.toggle("hidden", !isDemo());
+    if (!q) return; q.textContent = n; q.classList.toggle("hidden", !n);
+    $("syncBtn").style.opacity = isSyncing ? .5 : 1;
+  }
+  function renderAll() {
+    if ($("appView").classList.contains("hidden")) return;
+    const meta = store(K.SHOP_META, {}), h = new Date().getHours();
+    $("hdrTitle").textContent = meta.shopName || "DukaPulse";
+    $("hdrGreet").textContent = h < 12 ? "Good Morning" : h < 17 ? "Good Afternoon" : "Good Evening";
+    renderHome(); renderSales(); renderInv(); renderSet(); updateNetworkUI();
+    if (cur && cur.name === "sale") renderSaleList();
+  }
+  const todayReceipts = () => getSalesHistory().filter(r => r.date === localDate());
+  const receiptRow = r => `<div class="dp-item"><div><b>${esc(r.receiptId)}</b><small>${esc((r.time || "").slice(0, 5))} · ${esc(payLabel(r.paymentMode))}${r.customer ? " · 👤 " + esc(r.customer) : ""} · ${esc(r.items.map(i => i.qty + "× " + i.name).join(", ").slice(0, 60))}</small></div><b>${money(rSum(r))}</b></div>`;
+
+  function renderHome() {
+    const inv = getCachedInventory(), tr = todayReceipts(), st = store(K.DAILY_STATS, {});
+    const local = tr.reduce((s, r) => s + rSum(r), 0);
+    const rev = st.date === localDate() ? Math.max(Number(st.revenue) || 0, local) : local;
+    const low = inv.filter(isLow);
+    $("pgHome").innerHTML = backupBanner() + `
+      <div class="dp-card"><b>Quick Actions</b><div class="dp-qa">
+        <button onclick="openSub('categories')">🗂<span>Add Category</span></button>
+        <button onclick="openSub('product')">➕<span>Add Product</span></button>
+        <button class="hot" onclick="openSub('sale')">🛒<span>Record Sale</span></button></div></div>
+      <div class="dp-stats">
+        <div class="dp-stat g"><b>${money(rev)}</b><span>Today's Sales</span></div>
+        <div class="dp-stat r" onclick="lowOnly=true;setTab('inv');renderInv()"><b>${low.length}</b><span>Low Stock Items</span></div>
+        <div class="dp-stat b"><b>${inv.length}</b><span>Total Products</span></div>
+        <div class="dp-stat o" onclick="syncWithServer()"><b>${getOfflineQueue().length}</b><span>Unsynced Sales</span></div></div>
+      ${low.length ? `<h3>Low Stock</h3>` + low.slice(0, 4).map(i => `<div class="dp-item"><div><b>${esc(i.name)}</b><small>Alert level ${i.reorderLevel}</small></div><b style="color:#dc2626">${i.stock} left</b></div>`).join("") : ""}
+      <h3>Recent Sales <a onclick="setTab('sales')">View All</a></h3>
+      ${getSalesHistory().slice(-5).reverse().map(receiptRow).join("") || `<div class="dp-empty">No sales recorded yet</div>`}`;
+  }
+  function renderSales() {
+    const tr = todayReceipts().reverse();
+    $("pgSales").innerHTML = `<button class="dp-btn" onclick="openSub('sale')">🛒 Record a Sale</button>
+      <h3>Today's Sales <span>${money(tr.reduce((s, r) => s + rSum(r), 0))}</span></h3>
+      ${tr.map(receiptRow).join("") || `<div class="dp-empty">No sales recorded today</div>`}`;
+  }
+  function renderInv() {
+    const inv = getCachedInventory(), sel = $("invCat"), prev = sel.value || "All Categories";
+    sel.innerHTML = ["All Categories", ...cats()].map(c => `<option ${c === prev ? "selected" : ""}>${esc(c)}</option>`).join("");
+    $("lowChip").classList.toggle("on", lowOnly);
+    const q = $("invSearch").value.trim().toLowerCase();
+    const list = inv.filter(i => (!q || i.name.toLowerCase().includes(q) || i.itemId.toLowerCase().includes(q)) &&
+      (sel.value === "All Categories" || i.category === sel.value) && (!lowOnly || isLow(i)));
+    $("invList").innerHTML = list.map(i => `<div class="dp-item"><div><b>${esc(i.name)}</b><small>${esc(i.category || "General")} · 📦 ${i.stock}${isLow(i) ? ' <span style="color:#dc2626">LOW</span>' : ""}</small></div>
+      <div style="text-align:right"><b style="color:var(--accent)">${money(i.sellPrice)}</b><br><button class="dp-icon" style="color:var(--text-main)" onclick="itemMenu('${i.itemId}')">⋮</button></div></div>`).join("") || `<div class="dp-empty">No products found</div>`;
+  }
+  function setOpt(k, v) { const s = settings(); s[k] = v; save(K.SETTINGS, s); applyTheme(); renderAll(); if (cur) openSub(cur.name, cur.arg); }
+
+  // ---------- sub pages ----------
+  const sheetBtn = (t, f) => `<button onclick="$('sheet').classList.add('hidden');${f}">${t}</button>`;
+  function itemMenu(id) { openSheet(sheetBtn("✏️ Edit", `openSub('product','${id}')`) + sheetBtn("➕ Restock", `restock('${id}')`) + sheetBtn("🗑 Delete", `delProduct('${id}')`)); }
+  async function call(action, payload) {
+    if (isDemo()) throw new Error("Not available in Demo Mode. Exit demo mode to manage real products.");
+    const a = getStoredAuth();
+    const d = await api({ action, shopId: a.shopId, ...authCreds(a), payload });
+    if (!d.ok) { if (d.authExpired) logoutShop(); throw new Error(d.error || "Request failed"); }
+    if (d.token) saveToken(d.token);
+    if (d.inventory) save(K.INVENTORY, applyPendingQueueToInventory(d.inventory, getOfflineQueue()));
+    return d;
+  }
+  const needNet = () => navigator.onLine || (alert("⚠️ Connect to the internet for this action."), false);
+  async function saveProduct(e, id) {
+    e.preventDefault(); if (!needNet()) return;
+    const b = $("pSave"); b.disabled = true;
+    const p = { itemId: id, name: $("pName").value, category: $("pCat").value, buyPrice: $("pBuy").value, sellPrice: $("pSell").value, stock: $("pStock").value, reorderLevel: $("pRe").value };
+    try { await call(id ? "edit_product" : "add_product", p); closeSub(); } catch (err) { alert("❌ " + err.message); b.disabled = false; }
+  }
+  async function restock(id) {
+    const i = getCachedInventory().find(x => x.itemId === id), n = Number(prompt(`Add how many units of "${i.name}"?`));
+    if (!n || n <= 0 || !needNet()) return;
+    try { await call("restock_product", { itemId: id, addQty: n }); renderAll(); } catch (err) { alert("❌ " + err.message); }
+  }
+  async function delProduct(id) {
+    const i = getCachedInventory().find(x => x.itemId === id);
+    if (!confirm(`Delete "${i.name}"? Past sales are kept.`) || !needNet()) return;
+    try { await call("delete_product", { itemId: id }); renderAll(); } catch (err) { alert("❌ " + err.message); }
+  }
+
+  // ---------- record sale ----------
+  function calc() {
+    const inv = getCachedInventory(), items = Object.keys(cart).filter(id => cart[id] > 0).map(id => ({ i: inv.find(x => x.itemId === id), q: cart[id] })).filter(x => x.i);
+    const sub = r2(items.reduce((s, x) => s + x.q * x.i.sellPrice, 0));
+    let disc = !discountSpec ? 0 : discountSpec.t === "pct" ? sub * discountSpec.v / 100 : discountSpec.v;
+    disc = r2(Math.min(Math.max(disc, 0), sub));
+    const f = sub ? (sub - disc) / sub : 1;
+    const lines = items.map(x => ({ itemId: x.i.itemId, name: x.i.name, qty: x.q, price: Math.round(x.i.sellPrice * f * 1e4) / 1e4, buy: x.i.buyPrice }));
+    return { lines, sub, discount: disc, total: r2(lines.reduce((s, l) => s + l.qty * l.price, 0)) };
+  }
+  function calcUI() { const c = calc(); $("saleSub").textContent = money(c.sub); $("saleDisc").textContent = c.discount ? "− " + money(c.discount) : "—"; $("saleTotal").textContent = money(c.total); $("saleBtn").disabled = !c.lines.length; }
+  function renderSaleList() {
+    const q = ($("saleSearch").value || "").toLowerCase(), t = settings().track;
+    $("saleList").innerHTML = getCachedInventory().filter(i => !q || i.name.toLowerCase().includes(q)).map(i => `<div class="dp-item"><div><b>${esc(i.name)}</b><small>${money(i.sellPrice)} · ${i.stock} in stock</small></div>
+      <div class="dp-qty"><button onclick="chg('${i.itemId}',-1)">−</button><b>${cart[i.itemId] || 0}</b><button class="plus" onclick="chg('${i.itemId}',1)">+</button></div></div>`).join("") || `<div class="dp-empty">No products. Add products in Inventory first.</div>`;
+  }
+  function chg(id, d) {
+    const i = getCachedInventory().find(x => x.itemId === id), n = (cart[id] || 0) + d;
+    if (n < 0 || (d > 0 && settings().track && n > i.stock)) return d > 0 && alert(`Only ${i.stock} in stock.`);
+    cart[id] = n; renderSaleList(); calcUI();
+  }
+  function setDiscount() {
+    const v = prompt("Discount: amount (e.g. 50) or percent (e.g. 10%). Empty to remove.", "");
+    if (v === null) return; const s = v.trim();
+    discountSpec = !s ? null : s.endsWith("%") ? { t: "pct", v: parseFloat(s) || 0 } : { t: "amt", v: parseFloat(s) || 0 };
+    calcUI();
+  }
+  async function checkout() {
+    const sale = calc(); if (!sale.lines.length) return;
+    sale.customer = $("saleCust").value; sale.customerPhone = (store(K.CUSTOMERS, []).find(x => x.name === sale.customer) || {}).phone || "";
+    const mode = $("payMode").value;
+    if (mode !== "MPESA_STK") return finalize(mode, "", "", sale);
+    const phone = $("mpesaPhone").value.trim();
+    if (!phone) return alert("Enter customer's M-Pesa number.");
+    if (!needNet()) return;
+    $("saleBtn").disabled = true;
+    try {
+      const d = await call("mpesa_stk_push", { phone, amount: sale.total, receiptId: newReceiptId() });
+      pendingSale = sale; activeMpesaCheckoutId = d.stk.checkoutRequestId;
+      $("mpesaPromptStatusText").textContent = `Prompt sent to ${d.stk.phone} for KES ${sale.total.toFixed(2)}. Waiting for PIN...`;
+      $("mpesaWaitingState").classList.remove("hidden"); $("receiptConfirmedState").classList.add("hidden");
+      $("paymentReceiptModal").classList.remove("hidden"); startMpesaPolling();
+    } catch (e) { alert("❌ " + e.message); $("saleBtn").disabled = false; }
+  }
+  async function checkMpesaNowManual(silent) {
+    if (!activeMpesaCheckoutId) return;
+    try {
+      const a = getStoredAuth();
+      const d = await api({ action: "mpesa_query_status", shopId: a.shopId, ...authCreds(a), payload: { checkoutRequestId: activeMpesaCheckoutId } });
+      if (!d.ok) return; const p = d.payment;
+      if (p.status === "PAID") {
+        clearInterval(mpesaPollTimer); const id = activeMpesaCheckoutId; activeMpesaCheckoutId = null; if (!id) return;
+        finalize("M-Pesa STK", id, (p.mpesaReceipt || id.slice(-8)).toUpperCase(), pendingSale);
+      } else if (p.status === "FAILED") {
+        clearInterval(mpesaPollTimer); $("mpesaPromptStatusText").textContent = "❌ " + p.message; $("saleBtn").disabled = false;
+      } else if (!silent) $("mpesaPromptStatusText").textContent = "⏳ " + p.message;
+    } catch (e) {}
+  }
+  function cancelMpesaWait() { clearInterval(mpesaPollTimer); activeMpesaCheckoutId = null; $("paymentReceiptModal").classList.add("hidden"); $("saleBtn").disabled = false; }
+  function closeReceiptModal() { $("paymentReceiptModal").classList.add("hidden"); activeMpesaCheckoutId = null; closeSub(); }
+  function finalize(mode, checkoutId, ref, sale) {
+    if (!sale || !sale.lines.length) return;
+    const now = new Date(), pad = n => String(n).padStart(2, "0");
+    const rec = { receiptId: newReceiptId(), date: localDate(now), time: `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`, paymentMode: mode, checkoutRequestId: checkoutId || "", discount: sale.discount, customer: sale.customer || "", customerPhone: sale.customerPhone || "",
+      items: sale.lines.map(l => ({ itemId: l.itemId, name: l.name, qty: l.qty, sellPrice: l.price, buyPrice: l.buy })) };
+    const q = getOfflineQueue(); q.push(rec); save(K.OFFLINE_QUEUE, isDemo() ? [] : q);
+    const h = getSalesHistory(); h.push(rec); save(K.SALES_HISTORY, h.slice(-300));
+    save(K.INVENTORY, applyPendingQueueToInventory(getCachedInventory(), [rec]));
+    const st = store(K.DAILY_STATS, {}), total = rSum(rec), profit = rec.items.reduce((s, i) => s + (i.sellPrice - i.buyPrice) * i.qty, 0);
+    if (!st.date || st.date === rec.date) {
+      st.date = rec.date; st.revenue = r2((st.revenue || 0) + total); st.profit = r2((st.profit || 0) + profit); st.count = (st.count || 0) + 1;
+      st.byPayment = st.byPayment || {}; st.byPayment[mode] = r2((st.byPayment[mode] || 0) + total); save(K.DAILY_STATS, st);
+    }
+    cart = {}; discountSpec = null; pendingSale = null;
+    showPrintableReceipt({ receiptId: rec.receiptId, dateStr: rec.date, timeStr: rec.time.slice(0, 5), paymentLabel: ref ? `M-Pesa (${ref})` : mode, customer: sale.customer, total: sale.total, items: rec.items.map(i => ({ name: i.name, qty: i.qty, price: i.sellPrice })) });
+    renderAll(); afterSale(rec, total); if (navigator.onLine) syncWithServer();
+  }
+
+  // ---------- settings sub-pages ----------
+  const parseCSV = t => t.split(/\r?\n/).filter(l => l.trim()).map(l => { const o = []; let c = "", q = false; for (const ch of l) { if (ch === '"') q = !q; else if (ch === "," && !q) { o.push(c.trim()); c = ""; } else c += ch; } o.push(c.trim()); return o; });
+  function dl(name, text, type) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
+  const csvCell = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+  function readFile(inputId, cb) { const f = $(inputId).files[0]; if (!f) return; const r = new FileReader(); r.onload = () => cb(r.result); r.readAsText(f); }
+  async function bulkUpload() {
+    if (!needNet()) return;
+    readFile("bulkFile", async txt => {
+      const rows = parseCSV(txt); if (rows.length && /^name$/i.test(rows[0][0])) rows.shift();
+      const products = rows.map(r => ({ name: r[0], category: r[1], buyPrice: r[2], sellPrice: r[3], stock: r[4], reorderLevel: r[5] })).filter(p => p.name);
+      if (!products.length) return alert("No valid rows found.");
+      try { const d = await call("bulk_add_products", { products }); alert("✅ " + d.result.message); closeSub(); } catch (e) { alert("❌ " + e.message); }
+    });
+  }
+  function reportData() {
+    const t = localDate(), d7 = localDate(new Date(Date.now() - 6 * 864e5));
+    const rs = getSalesHistory().filter(r => rp === "today" ? r.date === t : rp === "week" ? r.date >= d7 : r.date.slice(0, 7) === t.slice(0, 7));
+    const prod = {}, pay = {}; let rev = 0, profit = 0;
+    rs.forEach(r => { r.items.forEach(i => { const v = i.qty * i.sellPrice; rev += v; profit += (i.sellPrice - i.buyPrice) * i.qty; prod[i.name] = prod[i.name] || { q: 0, v: 0 }; prod[i.name].q += i.qty; prod[i.name].v += v; pay[payLabel(r.paymentMode)] = (pay[payLabel(r.paymentMode)] || 0) + v; }); });
+    return { rs, rev, profit, prod: Object.entries(prod).sort((a, b) => b[1].v - a[1].v).slice(0, 5), pay };
+  }
+  const VIEWS = {
+    sale: () => `<input id="saleSearch" class="dp-in" placeholder="🔍 Search products" oninput="renderSaleList()"><div id="saleList"></div>
+      <div class="dp-card"><div class="dp-row"><span>Subtotal</span><b id="saleSub"></b></div>
+      <div class="dp-row"><button class="dp-chip" onclick="setDiscount()">🏷 Discount</button><b id="saleDisc"></b></div>
+      <div class="dp-row" style="font-size:18px"><span>Total</span><b id="saleTotal"></b></div>
+      <select id="saleCust" class="dp-in" onchange="togglePhone()">${custOptions()}</select>
+      <select id="payMode" class="dp-in" onchange="togglePhone()"><option>Cash</option><option value="MPESA_STK">M-Pesa (STK Push)</option><option>Mobile Money</option><option>Card/Bank</option></select>
+      <input id="mpesaPhone" class="dp-in hidden" placeholder="Customer M-Pesa number e.g. 07XXXXXXXX" inputmode="tel">
+      <button id="saleBtn" class="dp-btn" onclick="checkout()">✓ Complete Sale</button></div>`,
+    product: id => { const i = id ? getCachedInventory().find(x => x.itemId === id) : {}; return `<form class="dp-form" onsubmit="saveProduct(event,'${id || ""}')">
+      <label>Product Name</label><input id="pName" class="dp-in" required value="${esc(i.name || "")}">
+      <label>Category</label><select id="pCat" class="dp-in">${cats().map(c => `<option ${c === i.category ? "selected" : ""}>${esc(c)}</option>`).join("")}</select>
+      <div class="dp-2"><div><label>Cost Price</label><input id="pBuy" type="number" step="any" min="0" class="dp-in" value="${i.buyPrice ?? ""}"></div>
+      <div><label>Selling Price</label><input id="pSell" type="number" step="any" min="0" required class="dp-in" value="${i.sellPrice ?? ""}"></div></div>
+      <div class="dp-2"><div><label>Stock Quantity</label><input id="pStock" type="number" step="any" min="0" class="dp-in" value="${i.stock ?? 0}"></div>
+      <div><label>Min Stock Alert</label><input id="pRe" type="number" step="any" min="0" class="dp-in" value="${i.reorderLevel ?? 10}"></div></div>
+      <button id="pSave" class="dp-btn">✓ Save</button></form>`; },
+    categories: () => { const inv = getCachedInventory(), extra = store(K.CATS, []);
+      return `<button class="dp-btn" onclick="addCat()">＋ Add Category</button>` + cats().map(c => { const n = inv.filter(i => i.category === c).length;
+        return `<div class="dp-item"><div><b>${esc(c)}</b><small>${n} product${n === 1 ? "" : "s"}</small></div>${extra.includes(c) && !n ? `<button class="dp-icon" style="color:#dc2626" onclick="delCat(${JSON.stringify(c).replace(/"/g, "&quot;")})">🗑</button>` : ""}</div>`; }).join(""); },
+    customers: () => `<button class="dp-btn" onclick="addCust()">＋ Add Customer</button>` + (store(K.CUSTOMERS, []).map((c, n) => `<div class="dp-item"><div><b>${esc(c.name)}</b><small>${esc(c.phone || "")}</small></div><button class="dp-icon" style="color:#dc2626" onclick="delCust(${n})">🗑</button></div>`).join("") || `<div class="dp-empty">No customers yet</div>`),
+    shop: () => { const m = store(K.SHOP_META, {}), x = store(K.SHOP_EXTRA, {}); return `<form class="dp-form" onsubmit="saveShop(event)"><label>Shop Name</label><input class="dp-in" value="${esc(m.shopName || "")}" disabled>
+      <label>Owner Name</label><input id="sOwner" class="dp-in" value="${esc(x.owner || "")}"><label>Phone Number</label><input id="sPhone" class="dp-in" value="${esc(x.phone || "")}"><label>Address</label><input id="sAddr" class="dp-in" value="${esc(x.addr || "")}">
+      <button class="dp-btn">✓ Update Shop</button><p class="dp-small" style="color:var(--text-muted);margin-top:10px">Shop name is managed by your DukaPulse provider.</p></form>`; },
+    reports: () => { const d = reportData(); return `<div class="dp-chips">${[["today", "Today"], ["week", "This Week"], ["month", "This Month"]].map(([k, l]) => `<button class="dp-chip ${rp === k ? "on" : ""}" onclick="rp='${k}';openSub('reports')">${l}</button>`).join("")}</div>
+      <div class="dp-card" style="background:#1976d2;color:#fff"><div>Total Revenue</div><div style="font-size:30px;font-weight:800">${money(d.rev)}</div><div>From ${d.rs.length} completed sales</div></div>
+      <div class="dp-stats"><div class="dp-stat"><b>${d.rs.length}</b><span>Total Orders</span></div><div class="dp-stat"><b>${money(d.rs.length ? d.rev / d.rs.length : 0)}</b><span>Avg Order Value</span></div>
+      <div class="dp-stat g"><b>${money(d.profit)}</b><span>Profit</span></div><div class="dp-stat b"><b>${money(getCachedInventory().reduce((s, i) => s + i.stock * i.buyPrice, 0))}</b><span>Inventory Value</span></div></div>
+      <h3>Payment Summary</h3><div class="dp-card">${Object.entries(d.pay).map(([k, v]) => `<div class="dp-row"><span>${esc(k)}</span><b>${money(v)}</b></div>`).join("") || "No sales"}</div>
+      <h3>Top Selling Products</h3>${d.prod.map(([n, v], i) => `<div class="dp-item"><div><b>#${i + 1} ${esc(n)}</b><small>Sold: ${v.q}</small></div><b style="color:#16a34a">${money(v.v)}</b></div>`).join("") || `<div class="dp-empty">No sales in this period</div>`}
+      <p class="dp-small" style="color:var(--text-muted)">Based on the last 300 sales recorded on this device.</p>`; },
+    subscription: () => { const m = store(K.SHOP_META, {}), left = Math.ceil((new Date(m.expiryDate) - new Date(localDate())) / 864e5);
+      return `<div class="dp-card"><b>${left >= 0 ? "✅ Active Subscription" : "⚠️ Subscription Expired"}</b><p style="margin-top:8px">Valid until <b>${esc(m.expiryDate || "--")}</b>${left >= 0 ? ` (${left} day${left === 1 ? "" : "s"} left)` : ""}</p></div><p class="dp-small" style="color:var(--text-muted)">To renew or change your plan, contact your DukaPulse provider.</p>`; },
+    backup: () => `<div class="dp-card"><b>Local Backup</b><p class="dp-small" style="margin:6px 0 12px">Your products and sales already sync to your Google Sheet. This saves customers, categories, settings and recent sales on this phone.</p>
+      <button class="dp-btn alt" onclick="exportBackup()">⬆ Download Backup</button><input id="restoreFile" type="file" accept=".json" class="dp-in"><button class="dp-btn" onclick="restoreBackup()">⬇ Restore From File</button></div>`,
+    export: () => `<div class="dp-card"><b>Export Sales (CSV)</b><p class="dp-small" style="margin:6px 0 12px">Opens in Excel / Google Sheets. Covers the last 300 sales on this device.</p><button class="dp-btn" onclick="exportCSV()">⬇ Download CSV</button></div>`,
+    bulk: () => `<div class="dp-card"><p class="dp-small">Download the sample CSV, fill in your products, then upload it. Products with the same name are updated.</p><br><button class="dp-btn alt" onclick="dl('dukapulse-products-sample.csv','name,category,buyPrice,sellPrice,stock,reorderLevel\\nWheat Flour 2kg,Foodstuffs,100,130,50,10\\n','text/csv')">⬇ Download Sample CSV</button>
+      <input id="bulkFile" type="file" accept=".csv" class="dp-in"><button class="dp-btn" onclick="bulkUpload()">⬆ Upload CSV File</button></div>`,
+    currency: () => ["KSh", "UGX", "TZS", "RWF", "USD", "EUR", "GBP", "ZAR", "NGN"].map(c => `<div class="dp-item" onclick="setOpt('currency','${c}')"><b>${c}</b>${settings().currency === c ? "✔" : ""}</div>`).join(""),
+    theme: () => [["light", "☀️ Light"], ["dark", "🌙 Dark"], ["system", "⚙️ System Default"]].map(([k, l]) => `<div class="dp-item" onclick="setOpt('theme','${k}')"><b>${l}</b>${settings().theme === k ? "✔" : ""}</div>`).join("")
+  };
+  function addCat() { const n = (prompt("Category name?") || "").trim(); if (!n) return; const c = store(K.CATS, []); if (!cats().includes(n)) c.push(n); save(K.CATS, c); openSub("categories"); }
+  function delCat(n) { save(K.CATS, store(K.CATS, []).filter(c => c !== n)); openSub("categories"); }
+  function addCust() { const name = (prompt("Customer name?") || "").trim(); if (!name) return; const c = store(K.CUSTOMERS, []); c.push({ name, phone: (prompt("Phone (optional)") || "").trim() }); save(K.CUSTOMERS, c); openSub("customers"); }
+  function delCust(n) { const c = store(K.CUSTOMERS, []); c.splice(n, 1); save(K.CUSTOMERS, c); openSub("customers"); }
+  function saveShop(e) { e.preventDefault(); save(K.SHOP_EXTRA, { owner: $("sOwner").value, phone: $("sPhone").value, addr: $("sAddr").value }); closeSub(); }
+  function exportCSV() {
+    const rows = [["Receipt", "Date", "Time", "Payment", "Item", "Qty", "Unit Price", "Line Total"]];
+    getSalesHistory().forEach(r => r.items.forEach(i => rows.push([r.receiptId, r.date, r.time, payLabel(r.paymentMode), i.name, i.qty, i.sellPrice, r2(i.qty * i.sellPrice)])));
+    dl("dukapulse-sales.csv", rows.map(r => r.map(csvCell).join(",")).join("\n"), "text/csv");
+  }
+
+  // =====================================================================
+  // CONFIG: fill these two in (see setup notes)
+  // =====================================================================
+  const GOOGLE_CLIENT_ID = "";      // OAuth "Web application" client ID from Google Cloud Console
+  const SUPPORT_WHATSAPP = "";      // support number, digits only with country code, e.g. 2547XXXXXXXX
+  Object.assign(TITLES, { customer: "Customer", notifs: "Notification Settings", language: "Language", demo: "Demo Data" });
+
+  // ---------- phone BACK button: behaves like page navigation ----------
+  let prevState = null, subStack = [], curTab = "home";
+  const push = k => { history.pushState({ dp: k }, ""); prevState = history.state; };
+  history.replaceState({ dp: "root" }, ""); prevState = history.state;
+  window.addEventListener("popstate", () => {
+    const left = prevState, rePush = () => history.pushState(left, "");
+    if (!$("lockOverlay").classList.contains("hidden")) return rePush();
+    if (!$("sheet").classList.contains("hidden")) { $("sheet").classList.add("hidden"); return rePush(); }
+    if (!$("paymentReceiptModal").classList.contains("hidden")) { rePush(); return $("receiptConfirmedState").classList.contains("hidden") ? cancelMpesaWait() : closeReceiptModal(); }
+    prevState = history.state;
+    if (cur) { if (subStack.length) { const p = subStack.pop(); renderSub(p.name, p.arg); } else hideSub(); return; }
+    if (curTab !== "home") setTab("home", true);
+  });
+  function setTab(t, fromPop) {
+    const PG = { home: "pgHome", sales: "pgSales", inv: "pgInv", set: "pgSet" }, was = curTab;
+    curTab = t;
+    document.querySelectorAll(".dp-page").forEach(p => p.classList.toggle("active", p.id === PG[t]));
+    document.querySelectorAll(".dp-nav button").forEach(b => b.classList.toggle("active", b.dataset.t === t));
+    window.scrollTo(0, 0);
+    if (!fromPop) {
+      if (t !== "home" && was === "home") push("tab");
+      else if (t === "home" && was !== "home" && history.state && history.state.dp === "tab") history.back();
+    }
+    if (navigator.onLine && Date.now() - lastSyncAt > 60000) syncWithServer();
+  }
+  function renderSub(name, arg) {
+    cur = { name, arg }; $("subTitle").textContent = TITLES[name];
+    $("subBody").innerHTML = VIEWS[name](arg); $("sub").classList.remove("hidden");
+    if (name === "sale") { renderSaleList(); calcUI(); }
+  }
+  function openSub(name, arg) {
+    if (!cur || cur.name !== name) { if (cur) subStack.push(cur); push("sub"); }
+    renderSub(name, arg);
+  }
+  function hideSub() { $("sub").classList.add("hidden"); cur = null; subStack = []; renderAll(); }
+  function closeSub() { if (history.state && history.state.dp === "sub") history.back(); else hideSub(); }
+  function openSheet(h) { $("sheetBody").innerHTML = h; $("sheet").classList.remove("hidden"); }
+
+  // ---------- customers linked to sales ----------
+  const custOptions = () => `<option value="">Walk-in Customer</option>` + store(K.CUSTOMERS, []).map(c => `<option>${esc(c.name)}</option>`).join("");
+  function togglePhone() {
+    const stk = $("payMode").value === "MPESA_STK"; $("mpesaPhone").classList.toggle("hidden", !stk);
+    const c = store(K.CUSTOMERS, []).find(x => x.name === $("saleCust").value);
+    if (stk && c && c.phone && !$("mpesaPhone").value) $("mpesaPhone").value = c.phone;
+  }
+  const custSales = name => getSalesHistory().filter(r => r.customer === name);
+  VIEWS.customers = () => `<button class="dp-btn" onclick="addCust()">＋ Add Customer</button><br><br>` + (store(K.CUSTOMERS, []).map((c, n) => {
+    const s = custSales(c.name), tot = s.reduce((a, r) => a + rSum(r), 0);
+    return `<div class="dp-item" onclick="openSub('customer',${n})"><div><b>${esc(c.name)}</b><small>${esc(c.phone || "")} · ${s.length} purchase${s.length === 1 ? "" : "s"} · ${money(tot)}</small></div><button class="dp-icon" style="color:#dc2626" onclick="event.stopPropagation();delCust(${n})">🗑</button></div>`;
+  }).join("") || `<div class="dp-empty">No customers yet</div>`);
+  VIEWS.customer = n => { const c = store(K.CUSTOMERS, [])[n]; if (!c) return ""; const s = custSales(c.name).reverse();
+    return `<div class="dp-card"><b style="font-size:18px">${esc(c.name)}</b><br><span class="dp-small">${esc(c.phone || "No phone")}</span><div class="dp-row"><span>Total spent</span><b>${money(s.reduce((a, r) => a + rSum(r), 0))}</b></div></div><h3>Purchase History</h3>` + (s.map(receiptRow).join("") || `<div class="dp-empty">No purchases yet</div>`); };
+
+  // ---------- notifications ----------
+  const nset = () => ({ on: true, low: true, sales: false, daily: false, closing: "20:00", ...(settings().n || {}) });
+  function notify(t, b) {
+    if (!nset().on || !("Notification" in window) || Notification.permission !== "granted") return;
+    navigator.serviceWorker?.getRegistration().then(r => r ? r.showNotification(t, { body: b, icon: "icon-192.png" }) : new Notification(t, { body: b })).catch(() => {});
+  }
+  function setNotif(k, v) {
+    const s = settings(); s.n = { ...nset(), [k]: v }; save(K.SETTINGS, s);
+    if (k === "on" && v && "Notification" in window && Notification.permission === "default") Notification.requestPermission();
+    renderAll(); if (cur) renderSub(cur.name, cur.arg);
+  }
+  function afterSale(rec, total) {
+    const n = nset();
+    if (n.on && "Notification" in window && Notification.permission === "default") Notification.requestPermission();
+    if (n.sales) notify("Sale recorded", `${money(total)} · ${payLabel(rec.paymentMode)}`);
+    if (n.low) { const ids = rec.items.map(i => i.itemId), low = getCachedInventory().filter(i => ids.includes(i.itemId) && isLow(i)); if (low.length) notify("Low stock", low.map(i => `${i.name} (${i.stock})`).join(", ")); }
+  }
+  function dailyCheck() {
+    const n = nset(), d = localDate(), now = new Date(), [h, m] = n.closing.split(":").map(Number);
+    if (!n.on || !n.daily || store(K.LAST_SUMMARY, "") === d || now.getHours() * 60 + now.getMinutes() < h * 60 + m) return;
+    const tr = todayReceipts(); notify("Daily summary — " + (store(K.SHOP_META, {}).shopName || "DukaPulse"), `${tr.length} sales, ${money(tr.reduce((s, r) => s + rSum(r), 0))}`); save(K.LAST_SUMMARY, d);
+  }
+  VIEWS.notifs = () => { const n = nset(), row = (k, t, d) => `<div class="dp-set" onclick="setNotif('${k}',${!n[k]})"><div><b>${t}</b><div class="dp-small">${d}</div></div><span class="r">${n[k] ? "ON" : "OFF"}</span></div>`;
+    return `<div class="dp-card" style="padding:0">${row("on", "Enable Notifications", "Control all app notifications")}</div><h3>Notification Categories</h3><div class="dp-card" style="padding:0">${row("low", "Low Stock Alerts", "Alert when products are running low")}${row("sales", "Sale Notifications", "Notify when a sale is recorded")}${row("daily", "Daily Summary", "Daily report at closing time")}</div>
+      <label class="dp-small">Closing time</label><input type="time" class="dp-in" value="${n.closing}" onchange="setNotif('closing',this.value)">
+      <p class="dp-small" style="color:var(--text-muted)">${"Notification" in window ? "Permission: " + Notification.permission + ". Alerts appear while the app is open or recently used." : "This browser does not support notifications."}</p>`; };
+
+  // ---------- biometric lock (fingerprint / face via WebAuthn) ----------
+  let lastHidden = 0;
+  const bioOn = () => !!settings().bio && !!store("pos_bio_cred", "");
+  async function setBio(on) {
+    if (!on) { const s = settings(); s.bio = false; save(K.SETTINGS, s); return renderAll(); }
+    try {
+      if (!window.PublicKeyCredential || !(await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())) return alert("This phone or browser doesn't support fingerprint/face lock for web apps. Set up a screen lock on the phone first.");
+      const meta = store(K.SHOP_META, {});
+      const cred = await navigator.credentials.create({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), rp: { name: "DukaPulse" },
+        user: { id: crypto.getRandomValues(new Uint8Array(16)), name: meta.shopId || "shop", displayName: meta.shopName || "DukaPulse" },
+        pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }], authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" }, timeout: 60000 } });
+      save("pos_bio_cred", b64(cred.rawId)); const s = settings(); s.bio = true; save(K.SETTINGS, s); renderAll();
+    } catch (e) { alert("Could not enable biometric lock: " + (e.message || e)); }
+  }
+  async function unlockBio() {
+    try {
+      const id = Uint8Array.from(atob(store("pos_bio_cred", "")), c => c.charCodeAt(0));
+      await navigator.credentials.get({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), allowCredentials: [{ id, type: "public-key" }], userVerification: "required", timeout: 60000 } });
+      $("lockOverlay").classList.add("hidden"); lastHidden = 0;
+    } catch (e) {}
+  }
+  function lockNow() { if (bioOn() && getStoredAuth() && !$("appView").classList.contains("hidden")) { $("lockOverlay").classList.remove("hidden"); unlockBio(); } }
+  document.addEventListener("visibilitychange", () => { if (document.hidden) lastHidden = Date.now(); else if (lastHidden && Date.now() - lastHidden > 30000) lockNow(); });
+
+  // ---------- demo mode (local sample data, never touches the real shop) ----------
+  const REAL_KEYS = { INVENTORY: K.INVENTORY, DAILY_STATS: K.DAILY_STATS, OFFLINE_QUEUE: K.OFFLINE_QUEUE, SALES_HISTORY: K.SALES_HISTORY };
+  const isDemo = () => localStorage.getItem("pos_demo") === "1";
+  if (isDemo()) demoKeys(true);
+  function seedDemo() {
+    const P = [["Unga wa Ngano 2kg", "Foodstuffs", 118, 135, 40, 10], ["Sugar 1kg", "Foodstuffs", 150, 175, 25, 10], ["Rice 1kg", "Foodstuffs", 140, 170, 30, 10], ["Cooking Oil 1L", "Foodstuffs", 290, 340, 12, 8], ["Fresh Milk 500ml", "Dairy", 55, 65, 8, 10], ["Bread", "Bakery", 55, 65, 20, 6], ["Bar Soap", "Household", 40, 55, 35, 10], ["Tea Leaves 250g", "Foodstuffs", 85, 110, 5, 8]];
+    const inv = P.map((p, i) => ({ itemId: "DEMO-00" + (i + 1), name: p[0], category: p[1], buyPrice: p[2], sellPrice: p[3], stock: p[4], reorderLevel: p[5], status: p[4] <= p[5] ? "LOW STOCK" : "IN STOCK" }));
+    const hist = [], pay = ["Cash", "M-Pesa STK", "Cash", "Mobile Money"];
+    for (let d = 5; d >= 0; d--) for (let k = 0; k < 2 + (d % 3); k++) {
+      const a = inv[(d * 3 + k) % 8], b = inv[(d + k * 2 + 1) % 8];
+      hist.push({ receiptId: `DEMO-${d}-${k}`, date: localDate(new Date(Date.now() - d * 864e5)), time: `${String(8 + k * 3).padStart(2, "0")}:15:00`, paymentMode: pay[(d + k) % 4], items: [a, b].map((x, j) => ({ itemId: x.itemId, name: x.name, qty: 1 + ((d + k + j) % 3), sellPrice: x.sellPrice, buyPrice: x.buyPrice })) });
+    }
+    const t = hist.filter(r => r.date === localDate()), rev = t.reduce((s, r) => s + rSum(r), 0);
+    save(K.INVENTORY, inv); save(K.SALES_HISTORY, hist); save(K.OFFLINE_QUEUE, []);
+    save(K.DAILY_STATS, { date: localDate(), revenue: r2(rev), profit: r2(t.reduce((s, r) => s + r.items.reduce((a, i) => a + (i.sellPrice - i.buyPrice) * i.qty, 0), 0)), count: t.length, byPayment: {} });
+  }
+  function enterDemo() { if (!confirm("Load sample products and sales so you can practise? Your real shop data is not touched.")) return; localStorage.setItem("pos_demo", "1"); demoKeys(true); seedDemo(); cart = {}; hideSub(); setTab("home"); }
+  function exitDemo() { localStorage.removeItem("pos_demo"); ["demo_inv", "demo_stats", "demo_queue", "demo_hist"].forEach(k => localStorage.removeItem(k)); demoKeys(false); cart = {}; hideSub(); renderAll(); if (navigator.onLine) syncWithServer(); }
+  VIEWS.demo = () => `<div class="dp-card"><b>🧪 Demo Mode</b><p class="dp-small" style="margin:8px 0 14px">Loads sample products and a week of sales so you can practise recording sales, discounts and reports. Nothing is sent to your shop, and your real data stays safe. Exit demo mode any time to return.</p>
+    ${isDemo() ? `<button class="dp-btn red" onclick="exitDemo()">Exit Demo Mode</button>` : `<button class="dp-btn" onclick="enterDemo()">Load Demo Data</button>`}</div>`;
+
+  // ---------- help chat ----------
+  function helpChat() {
+    if (!SUPPORT_WHATSAPP) return alert("Support chat isn't set up yet. Ask your provider to add the support WhatsApp number.");
+    const m = store(K.SHOP_META, {});
+    window.open(`https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(`Hello DukaPulse support, I need help. Shop: ${m.shopName || ""} (${m.shopId || ""})`)}`, "_blank");
+  }
+
+  // ---------- Google Drive backup (hidden app-data folder, only DukaPulse can see it) ----------
+  let gTok = "", gExp = 0;
+  const gLoad = () => new Promise((ok, no) => { if (window.google && google.accounts) return ok(); const s = document.createElement("script"); s.src = "https://accounts.google.com/gsi/client"; s.onload = ok; s.onerror = () => no(new Error("Could not load Google sign-in. Check your internet.")); document.head.appendChild(s); });
+  async function gAuth() {
+    if (!GOOGLE_CLIENT_ID) throw new Error("Google sign-in is not configured yet. Ask your provider to add the Google Client ID.");
+    if (gTok && Date.now() < gExp) return gTok;
+    await gLoad();
+    return new Promise((ok, no) => google.accounts.oauth2.initTokenClient({ client_id: GOOGLE_CLIENT_ID, scope: "https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.email",
+      callback: r => { if (r.error) return no(new Error(r.error)); gTok = r.access_token; gExp = Date.now() + (r.expires_in - 60) * 1000; ok(gTok); }, error_callback: e => no(new Error(e.type || "Sign-in cancelled")) }).requestAccessToken({}));
+  }
+  async function gFetch(url, opt = {}) { const t = await gAuth(), r = await fetch(url, { ...opt, headers: { Authorization: "Bearer " + t, ...(opt.headers || {}) } }); if (!r.ok) throw new Error("Google Drive error " + r.status); return r; }
+  const gName = () => `dukapulse-${store(K.SHOP_META, {}).shopId || "shop"}.json`;
+  const gFind = async () => (await (await gFetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,modifiedTime)&q=${encodeURIComponent(`name='${gName()}'`)}`)).json()).files[0] || null;
+  const backupPayload = () => ({ v: 2, app: "DukaPulse", at: new Date().toISOString(), customers: store(K.CUSTOMERS, []), cats: store(K.CATS, []), settings: settings(), shopExtra: store(K.SHOP_EXTRA, {}), history: getSalesHistory(), queue: getOfflineQueue() });
+  async function gConnect() {
+    try { await gAuth(); const u = await (await gFetch("https://www.googleapis.com/oauth2/v3/userinfo")).json(); save("pos_g_email", u.email || "connected"); if (cur) renderSub("backup"); } catch (e) { alert("❌ " + e.message); }
+  }
+  function gDisconnect() { try { if (gTok && window.google) google.accounts.oauth2.revoke(gTok); } catch (e) {} gTok = ""; gExp = 0; localStorage.removeItem("pos_g_email"); if (cur) renderSub("backup"); }
+  async function gBackupNow(silent) {
+    try {
+      if (isDemo()) throw new Error("Exit demo mode first.");
+      const ex = await gFind(), b = "dp" + Date.now();
+      const body = `--${b}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(ex ? {} : { name: gName(), parents: ["appDataFolder"] })}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(backupPayload())}\r\n--${b}--`;
+      await gFetch(`https://www.googleapis.com/upload/drive/v3/files${ex ? "/" + ex.id : ""}?uploadType=multipart`, { method: ex ? "PATCH" : "POST", headers: { "Content-Type": `multipart/related; boundary=${b}` }, body });
+      save("pos_g_last", new Date().toLocaleString()); save("pos_g_last_ts", Date.now()); if (!silent) { alert("✅ Backup saved to Google Drive."); } if (cur && cur.name === "backup") renderSub("backup");
+    } catch (e) { if (!silent) alert("❌ " + e.message); }
+  }
+  async function gRestore() {
+    try { const ex = await gFind(); if (!ex) return alert("No backup found on this Google account."); if (!confirm("Restore from the Google Drive backup? This merges sales and replaces customers, categories and settings on this phone.")) return;
+      applyBackup(await (await gFetch(`https://www.googleapis.com/drive/v3/files/${ex.id}?alt=media`)).json()); } catch (e) { alert("❌ " + e.message); }
+  }
+  function applyBackup(b) {
+    if (!b || !b.v) return alert("❌ Not a valid DukaPulse backup.");
+    const merge = (a, c) => { const seen = new Set(a.map(r => r.receiptId)); return a.concat((c || []).filter(r => !seen.has(r.receiptId))); };
+    save(K.CUSTOMERS, b.customers || []); save(K.CATS, b.cats || []); save(K.SETTINGS, b.settings || {}); save(K.SHOP_EXTRA, b.shopExtra || {});
+    save(K.SALES_HISTORY, merge(getSalesHistory(), b.history).slice(-300)); save(K.OFFLINE_QUEUE, merge(getOfflineQueue(), b.queue));
+    applyTheme(); renderAll(); alert("✅ Restored."); if (navigator.onLine) syncWithServer();
+  }
+  function exportBackup() { dl("dukapulse-backup-" + localDate() + ".json", JSON.stringify(backupPayload()), "application/json"); }
+  function restoreBackup() { readFile("restoreFile", t => { try { applyBackup(JSON.parse(t)); } catch { alert("❌ Not a valid DukaPulse backup file."); } }); }
+  // ---- account backup (stored in the shop's own Google Sheet through the DukaPulse backend) ----
+  const autoOn = () => settings().autoBackup !== false;
+  async function cloudBackupNow(silent) {
+    if (!navigator.onLine) { if (!silent) alert("⚠️ Connect to the internet to back up."); return; }
+    try {
+      await call("save_backup", backupPayload());
+      save(K.CB_LAST, new Date().toLocaleString()); save(K.CB_TS, Date.now());
+      if (!silent) alert("✅ Backup saved to your DukaPulse account.");
+      if (cur && cur.name === "backup") renderSub("backup"); else renderHome();
+    } catch (e) { if (!silent) alert("❌ " + e.message); }
+  }
+  async function cloudRestore() {
+    if (!navigator.onLine) return alert("⚠️ Connect to the internet to restore.");
+    try {
+      const d = await call("load_backup", {});
+      if (!d.result.found) return alert("No backup found for this shop yet.");
+      if (!confirm(`Restore the backup saved on ${d.result.savedAt}? This merges sales and replaces customers, categories and settings on this phone.`)) return;
+      applyBackup(d.result.backup);
+    } catch (e) { alert("❌ " + e.message); }
+  }
+  function autoBackupMaybe() { if (autoOn() && navigator.onLine && !isDemo() && getStoredAuth() && Date.now() - store(K.CB_TS, 0) > 12 * 36e5) cloudBackupNow(true); }
+  const backupBanner = () => (store(K.CB_TS, 0) || store("pos_g_last_ts", 0) || store(K.BANNER_OFF, 0)) ? "" : `<div class="dp-banner" onclick="openSub('backup')"><div><b>☁ No backup yet</b><div class="dp-small">Tap to back up your data to your DukaPulse account</div></div><button class="dp-icon" style="color:#b91c1c" onclick="event.stopPropagation();save(K.BANNER_OFF,1);renderHome()">✕</button></div>`;
+  VIEWS.backup = () => { const em = store("pos_g_email", "");
+    const google = !GOOGLE_CLIENT_ID ? "" : `<div class="dp-card"><b>Google Drive (optional)</b><p style="margin:8px 0 12px">${em ? "🟢 Connected: " + esc(em) : "⚪ Not connected"}</p>${em ? `<button class="dp-btn alt" onclick="gDisconnect()">Disconnect</button>` : `<button class="dp-btn" onclick="gConnect()">Sign in with Google</button>`}<br><br><button class="dp-btn alt" onclick="gBackupNow()">⬆ Back up to Google Drive</button><button class="dp-btn alt" onclick="gRestore()">⬇ Restore from Google Drive</button><p class="dp-small">Last Google backup: ${esc(store("pos_g_last", "Never"))}</p></div>`;
+    return `<div class="dp-card"><b>☁ DukaPulse Account Backup</b><p class="dp-small" style="margin:6px 0 12px">Saves your customers, categories, settings, recent sales and unsynced sales to your shop's own sheet. Restore it on any phone after logging in.</p>
+      <p style="margin-bottom:12px">Last backup: <b>${esc(store(K.CB_LAST, "Never"))}</b></p><button class="dp-btn" onclick="cloudBackupNow()">⬆ Backup Now</button><br><br><button class="dp-btn alt" onclick="cloudRestore()">⬇ Restore From Account</button></div>
+      <div class="dp-card"><b>Automatic Backup</b><p class="dp-small" style="margin:6px 0 12px">Backs up about twice a day while you're online.</p><button class="dp-btn alt" onclick="setOpt('autoBackup',${!autoOn()})">${autoOn() ? "Automatic ✔ (tap to turn off)" : "Manual only (tap to turn on)"}</button></div>${google}
+      <div class="dp-card"><b>Backup File</b><p class="dp-small" style="margin:6px 0 12px">Save to or restore from a file on this phone.</p><button class="dp-btn alt" onclick="exportBackup()">⬆ Download Backup File</button><input id="restoreFile" type="file" accept=".json" class="dp-in"><button class="dp-btn" onclick="restoreBackup()">⬇ Restore From File</button></div>`; };
+
+  // ---------- languages (English / Kiswahili) ----------
+  const SW = {"Home":"Mwanzo","Sales":"Mauzo","Inventory":"Bidhaa","Settings":"Mipangilio","Quick Actions":"Vitendo vya Haraka","Add Category":"Ongeza Kundi","Add Product":"Ongeza Bidhaa","Record Sale":"Rekodi Mauzo","Record a Sale":"Rekodi Mauzo","Today's Sales":"Mauzo ya Leo","Low Stock Items":"Bidhaa Zinazoisha","Total Products":"Jumla ya Bidhaa","Unsynced Sales":"Mauzo Yasiyosawazishwa","Low Stock":"Bidhaa Zinazoisha","Recent Sales":"Mauzo ya Karibuni","View All":"Tazama Zote","No sales recorded yet":"Hakuna mauzo yaliyorekodiwa","No sales recorded today":"Hakuna mauzo leo","No products found":"Hakuna bidhaa","All Categories":"Makundi Yote","Business":"Biashara","App Settings":"Mipangilio ya Programu","About":"Kuhusu","Shop Details":"Maelezo ya Duka","Customers":"Wateja","Categories":"Makundi","Reports & Analytics":"Ripoti na Uchambuzi","Subscription":"Usajili","Backup & Restore":"Hifadhi na Rejesha","Export Data":"Hamisha Data","Bulk Upload Products":"Pakia Bidhaa Nyingi","Demo Data":"Data ya Majaribio","Currency":"Sarafu","Language":"Lugha","Theme":"Mandhari","Notification Settings":"Mipangilio ya Arifa","Track Inventory":"Fuatilia Bidhaa","Biometric Lock":"Kufuli ya Alama za Mwili","Help chat":"Mazungumzo ya Msaada","App Version":"Toleo la Programu","Log Out":"Toka","ON":"WASHA","OFF":"ZIMA","Search products":"Tafuta bidhaa","Subtotal":"Jumla ndogo","Discount":"Punguzo","Total":"Jumla","Complete Sale":"Kamilisha Mauzo","Walk-in Customer":"Mteja wa Kawaida","Cash":"Pesa Taslimu","Mobile Money":"Pesa za Simu","Card/Bank":"Kadi/Benki","Add Customer":"Ongeza Mteja","No customers yet":"Hakuna wateja bado","Total spent":"Jumla aliyotumia","Purchase History":"Historia ya Manunuzi","No purchases yet":"Hakuna manunuzi bado","Product Name":"Jina la Bidhaa","Category":"Kundi","Cost Price":"Bei ya Kununua","Selling Price":"Bei ya Kuuza","Stock Quantity":"Idadi ya Stoo","Min Stock Alert":"Kiwango cha Tahadhari","Save":"Hifadhi","Edit":"Hariri","Restock":"Ongeza Stoo","Delete":"Futa","Today":"Leo","This Week":"Wiki Hii","This Month":"Mwezi Huu","Total Revenue":"Mapato Jumla","Total Orders":"Jumla ya Oda","Avg Order Value":"Wastani wa Oda","Profit":"Faida","Inventory Value":"Thamani ya Stoo","Payment Summary":"Muhtasari wa Malipo","Top Selling Products":"Bidhaa Zinazouzwa Zaidi","No sales":"Hakuna mauzo","Owner Name":"Jina la Mmiliki","Phone Number":"Namba ya Simu","Address":"Anwani","Shop Name":"Jina la Duka","Update Shop":"Sasisha Duka","Active Subscription":"Usajili Unaoendelea","Cloud Status":"Hali ya Wingu","Sign in with Google":"Ingia na Google","Disconnect":"Tenganisha","Manual Backup":"Hifadhi ya Mkono","Backup Now":"Hifadhi Sasa","Automatic Backup":"Hifadhi ya Kiotomatiki","Backup Disabled":"Hifadhi Imezimwa","Download Sample CSV":"Pakua CSV ya Mfano","Upload CSV File":"Pakia Faili ya CSV","Enable Notifications":"Washa Arifa","Notification Categories":"Aina za Arifa","Low Stock Alerts":"Tahadhari za Bidhaa Kuisha","Daily Summary":"Muhtasari wa Kila Siku","Closing time":"Muda wa Kufunga","Light":"Mwanga","Dark":"Giza","System Default":"Chaguo-msingi la Simu","Demo Mode":"Hali ya Majaribio","Load Demo Data":"Pakia Data ya Majaribio","Exit Demo Mode":"Toka Hali ya Majaribio","Sign in with your Shop Username (or ID) and Password":"Ingia kwa Jina la Mtumiaji (au ID) na Nenosiri","Username or Shop ID":"Jina la Mtumiaji au ID ya Duka","Unlock POS":"Fungua","Show":"Onyesha","Hide":"Ficha","Print Receipt":"Chapisha Risiti","Done / Next Sale":"Imekamilika / Mauzo Yanayofuata","Cancel":"Ghairi","Check Payment Now":"Angalia Malipo Sasa","Waiting for Customer PIN...":"Inasubiri PIN ya Mteja...","DukaPulse Locked":"DukaPulse Imefungwa","Unlock":"Fungua","English":"Kiingereza","Kiswahili":"Kiswahili"};
+  Object.assign(SW, {"DukaPulse Account Backup":"Hifadhi ya Akaunti ya DukaPulse","Restore From Account":"Rejesha Kutoka Akaunti","No backup yet":"Hakuna hifadhi bado","Backup File":"Faili ya Hifadhi","Download Backup File":"Pakua Faili ya Hifadhi","Restore From File":"Rejesha Kutoka Faili"});
+  const LANGS = { en: {}, sw: SW }, i18nDone = new WeakMap(), i18nOrig = new WeakMap();
+  function trNode(n) {
+    const lang = settings().lang || "en", cur_ = n.nodeValue;
+    if (i18nDone.get(n) === cur_) return;
+    const raw = i18nOrig.has(n) ? i18nOrig.get(n) : cur_, m = /^(\s*[^A-Za-z]*)([\s\S]*?)(\s*)$/.exec(raw), tr = (LANGS[lang] || {})[m[2]];
+    if (lang === "en" || !tr) { if (i18nOrig.has(n) && lang === "en") { n.nodeValue = i18nOrig.get(n); i18nDone.delete(n); } return; }
+    i18nOrig.set(n, raw); const v = m[1] + tr + m[3]; i18nDone.set(n, v); n.nodeValue = v;
+  }
+  function trTree(root) {
+    if (root.nodeType === 3) return trNode(root);
+    if (root.nodeType !== 1 && root.nodeType !== 9) return;
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) trNode(n);
+    (root.querySelectorAll ? root.querySelectorAll("[placeholder]") : []).forEach(e => { const k = e.dataset.ph || e.getAttribute("placeholder"), t = (SW[k.replace(/^[^A-Za-z]*/, "")]); e.dataset.ph = k; e.placeholder = (settings().lang === "sw" && t) ? k.replace(/[A-Za-z].*$/, "") + t : k; });
+  }
+  function startI18n() { trTree(document.body); new MutationObserver(ms => ms.forEach(m => { m.addedNodes.forEach(trTree); if (m.type === "characterData") trNode(m.target); })).observe(document.body, { childList: true, subtree: true, characterData: true }); }
+  function setLang(l) { const s = settings(); s.lang = l; save(K.SETTINGS, s); document.documentElement.lang = l; trTree(document.body); renderAll(); if (cur) renderSub(cur.name, cur.arg); }
+  VIEWS.language = () => [["en", "English"], ["sw", "Kiswahili"]].map(([k, l]) => `<div class="dp-item" onclick="setLang('${k}')"><b>${l}</b>${(settings().lang || "en") === k ? "✔" : ""}</div>`).join("") + `<p class="dp-small" style="color:var(--text-muted)">Menus, buttons and labels change language. Pop-up messages stay in English for now.</p>`;
+
+  // ---------- settings list (rebuilt with the new features) ----------
+  function renderSet() {
+    const s = settings(), meta = store(K.SHOP_META, {}), act = (meta.expiryDate || "") >= localDate(), n = nset();
+    const row = (ic, t, r, f) => `<div class="dp-set" onclick="${f}"><span class="ic">${ic}</span><b>${t}</b><span class="r">${r || "›"}</span></div>`;
+    $("pgSet").innerHTML = `<h3>Business</h3><div class="dp-card" style="padding:0">
+      ${row("🏪", "Shop Details", "", "openSub('shop')")}${row("👥", "Customers", "", "openSub('customers')")}${row("🗂", "Categories", "", "openSub('categories')")}
+      ${row("📊", "Reports & Analytics", "", "openSub('reports')")}${row("🏅", "Subscription", act ? '<span class="dp-tag">Active</span>' : "Expired", "openSub('subscription')")}
+      ${row("☁️", "Backup & Restore", "", "openSub('backup')")}${row("⬇️", "Export Data", "", "openSub('export')")}${row("📄", "Bulk Upload Products", "", "openSub('bulk')")}${row("🧪", "Demo Data", isDemo() ? "ON" : "", "openSub('demo')")}</div>
+      <h3>App Settings</h3><div class="dp-card" style="padding:0">
+      ${row("💱", "Currency", esc(s.currency), "openSub('currency')")}${row("🌐", "Language", s.lang === "sw" ? "Kiswahili" : "English", "openSub('language')")}${row("🎨", "Theme", esc(s.theme), "openSub('theme')")}
+      ${row("🔔", "Notification Settings", n.on ? "ON" : "OFF", "openSub('notifs')")}${row("📦", "Track Inventory", s.track ? "ON" : "OFF", "setOpt('track',!settings().track)")}${row("🔐", "Biometric Lock", bioOn() ? "ON" : "OFF", "setBio(" + !bioOn() + ")")}</div>
+      <h3>About</h3><div class="dp-card" style="padding:0">${row("💬", "Help chat", "", "helpChat()")}${row("ℹ️", "App Version", "DukaPulse 2.1", "")}${row("🚪", "Log Out", "", "if(confirm('Log out of this shop?'))logoutShop()")}</div>`;
+  }
+  setInterval(() => { dailyCheck(); autoBackupMaybe(); }, 3e5);
+
+  // ---------- per-shop local storage: every shop's data lives under its own keys ----------
+  let curShop = "";
+  const KEY_BASE = { INVENTORY: REAL_KEYS.INVENTORY, DAILY_STATS: REAL_KEYS.DAILY_STATS, OFFLINE_QUEUE: REAL_KEYS.OFFLINE_QUEUE, SALES_HISTORY: REAL_KEYS.SALES_HISTORY,
+    SHOP_META: K.SHOP_META, CUSTOMERS: K.CUSTOMERS, CATS: K.CATS, SHOP_EXTRA: K.SHOP_EXTRA, CB_TS: "pos_cb_ts", CB_LAST: "pos_cb_last", BANNER_OFF: "pos_banner_off", LAST_SUMMARY: "pos_last_summary" };
+  function applyShopKeys(id) {
+    curShop = id || "";
+    const sfx = "::" + (curShop || "none");
+    Object.keys(KEY_BASE).forEach(k => K[k] = KEY_BASE[k] + sfx);
+    if (isDemo()) demoKeys(true);
+  }
+  function demoKeys(on) {
+    if (on) { K.INVENTORY = "demo_inv"; K.DAILY_STATS = "demo_stats"; K.OFFLINE_QUEUE = "demo_queue"; K.SALES_HISTORY = "demo_hist"; }
+    else applyShopKeys(curShop);
+  }
+  /** One-time: data saved by older versions was shared by all shops on this phone, so its sales list can't be trusted and is cleared. */
+  function migrateLegacy() {
+    if (localStorage.getItem("pos_ns_v2") || !curShop) return;
+    const mv = (oldK, newK) => { const v = localStorage.getItem(oldK); if (v !== null && localStorage.getItem(newK) === null) localStorage.setItem(newK, v); localStorage.removeItem(oldK); };
+    mv(KEY_BASE.OFFLINE_QUEUE, K.OFFLINE_QUEUE); mv(KEY_BASE.CUSTOMERS, K.CUSTOMERS); mv(KEY_BASE.CATS, K.CATS); mv(KEY_BASE.SHOP_EXTRA, K.SHOP_EXTRA);
+    ["INVENTORY", "DAILY_STATS", "SALES_HISTORY", "SHOP_META", "CB_TS", "CB_LAST", "BANNER_OFF", "LAST_SUMMARY"].forEach(k => localStorage.removeItem(KEY_BASE[k]));
+    localStorage.setItem("pos_ns_v2", "1");
+  }
+  applyShopKeys((getStoredAuth() || {}).shopId); migrateLegacy();
+
+  window.addEventListener("online", () => { updateNetworkUI(); syncWithServer(); });
+  window.addEventListener("offline", updateNetworkUI);
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
+  document.addEventListener("DOMContentLoaded", () => {
+    applyTheme(); document.documentElement.lang = settings().lang || "en";
+    const a = getStoredAuth();
+    if (a && a.shopId && (a.token || a.pin)) { showAppFromLocalCache(); lockNow(); dailyCheck(); if (navigator.onLine) migrateLegacyAuth().then(syncWithServer); }
+    else showView("loginView");
+    startI18n();
+  });
+</script>
+</body>
+</html>
